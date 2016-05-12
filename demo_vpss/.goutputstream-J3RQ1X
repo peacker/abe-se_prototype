@@ -1,0 +1,106 @@
+#!/bin/bash
+
+#sudo apt-get update
+
+sudo chmod -R 755 ../../CPABE
+
+# INSTALL CLIENT FTP AND MYSQL
+# ----------------------------
+
+sudo apt-get install --yes ftp
+
+# - to uninstall mysql
+#sudo service mysql stop
+#sudo killall -9 mysql
+#sudo killall -9 mysqld
+#sudo apt-get remove --purge mysql-server mysql-client mysql-common
+#sudo apt-get autoremove
+#sudo apt-get autoclean
+#sudo deluser mysql
+#sudo rm -rf /var/lib/mysql
+#sudo apt-get purge mysql-server-core-5.5
+#sudo apt-get purge mysql-client-core-5.5
+# - or
+#sudo apt-get purge mysql-client-core-5.6
+#sudo apt-get autoremove
+#sudo apt-get autoclean
+
+sudo apt-get install --yes mysql-client
+sudo apt-get install --yes mysql-server
+
+#If you are using ubuntu, you have to use the following steps to avoid this error:
+# - run the command vim /etc/mysql/my.cnf
+# - comment bind-address = 127.0.0.1 using the # symbol
+# - restart your mysql server once with
+#    service mysql restart
+#    or
+#    /etc/init.d/mysql restart
+
+#INSTALL DEPENDENCIES
+#--------------------
+# PYTHON 2.7, PYTHON3, WXPYTHON
+sudo apt-get install --yes python
+sudo apt-get install --yes python-mysqldb
+sudo apt-get install --yes python3
+sudo apt-get install --yes python-wxgtk2.8
+
+# OTHER LIBRARIES:
+#      (instructions in the folder CP-ABE-LIB)
+#        - GMP 5.x
+#        - PBC 0.5.14
+#        - OPENSSL
+
+sudo apt-get install --yes m4
+
+# gmp library
+cd ../CP-ABE-LIB/gmp-6.0.0
+./configure
+make -l
+sudo make install
+
+sudo apt-get install --yes flex
+sudo apt-get install --yes bison
+
+# openssl
+sudo apt-get install --yes libssl-dev
+
+# pbc library
+cd ../CP-ABE-LIB/pbc-0.5.14
+./configure
+make -l
+sleep 1m
+if [[ $? -ne 0 ]]
+then 
+  exit
+fi
+sudo make install
+sleep 1m
+
+#INSTALL CHARM
+#-------------
+#    - from a terminal, navigate into the folder
+#      "charm-0.43"
+#      and run the following commands:
+
+cd ../../charm-0.43
+sh configure.sh
+sudo make -l
+sudo make install
+sudo ldconfig
+
+# do it again...
+#cd ../CP-ABE-LIB/pbc-0.5.14
+#./configure
+#make -l
+#sudo make install
+
+#cd ../../charm-0.43
+#sh configure.sh
+#sudo make -l
+#sudo make install
+#sudo ldconfig
+
+
+cd ../demo_cpabe
+python SET_ABE_client.py
+
