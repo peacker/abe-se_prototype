@@ -1,5 +1,8 @@
 import sys     
 
+import time
+from vpss_def import *
+
 from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEnc import ABEnc
@@ -55,8 +58,12 @@ def main():
     # read public key from public.k
     pk = read_object(sys.argv[3], group)
 
+    start = time.clock()
     # create secret key
     sk = cpabe.keygen(pk, msk, attr_list)
+    end = time.clock()
+    if verbose: 
+        print ("*** abe-keygen CLOCK TIME: " + str(end - start) + " sec")
 
     # write secret key to file secret.k
     write_object(sys.argv[5], sk, group)

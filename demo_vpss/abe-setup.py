@@ -1,6 +1,9 @@
 import os
 import sys     
 
+import time
+from vpss_def import *
+
 from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEnc import ABEnc
@@ -34,12 +37,14 @@ def main():
     assert len(sys.argv) == 5, "BAD or NO (GROUP NAME, GROUP DESTINATION, " + \
                                "PUBLIC KEY, MASTER KEY) DEFINED!!!"  
 
-    #Get the eliptic curve with the bilinear mapping feature needed.
+    #Get the elliptic curve with the bilinear mapping feature needed.
     if ( sys.argv[1] != "SS512"  and 
          sys.argv[1] != "SS_e_R224Q1024" and 
          sys.argv[1] != "SS_e_R224Q2048" and 
+         sys.argv[1] != "SS_e_R256Q1536" and 
          sys.argv[1] != "SS_e_R256Q3072" and 
-         sys.argv[1] != "SS_e_R384Q8192"
+         sys.argv[1] != "SS_e_R384Q8192" and
+         sys.argv[1] != "SS_e_R512Q7680"
         ) : 
         print ("Error: Unknown group definition!")
     else: 
@@ -50,7 +55,13 @@ def main():
     group = groupObj
 
     cpabe = CPabe(groupObj)
+
+    start = time.clock()
     (msk, pk) = cpabe.setup()
+    end = time.clock()
+    if verbose: 
+        print ("*** abe-setup CLOCK TIME: " + str(end - start) + " sec")
+
 
     # print to file the group name
     #grouppath = os.path.join(sys.argv[2], sys.argv[1] + ".g")

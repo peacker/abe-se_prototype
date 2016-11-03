@@ -6,7 +6,6 @@
 import os   # operating system functions
 import sys
 import shutil
-import random
 
 # definitions
 from vpss_def import *
@@ -14,19 +13,21 @@ from vpss_func import *
 
 # ----------------------------------------------------------------------------
 
-ATTRIBUTES = ["ROMA","MILANO","TORINO","NAPOLI",    # 0,1,2,3
-              "MANAGER","BUSINESS","MARKETING","IT",        # 4,5,6,7
-              "FINANCE","ADMINISTRATION","CONSULING","CALLCENTER",        # 8,9,10,11
+ATTRIBUTES = ["ESERCITO","MARINA","AERONAUTICA","CARABINIERI",    # 0,1,2,3
+              "REPARTO1","REPARTO2","REPARTO3","REPARTO4",        # 4,5,6,7
+              "REPARTO5","REPARTO6","REPARTO7","REPARTO8",        # 8,9,10,11
               "UFFICIO1","UFFICIO2","UFFICIO3","UFFICIO4",        #12,13,14,15
               "UFFICIO5","UFFICIO6","UFFICIO7","UFFICIO8",        #16,17,18,19
-              "FILIALE1","FILIALE2","FILIALE3","FILIALE4",        #20,21,22,23
-              "GROUP1","GROUP2","GROUP3","GROUP4",                     #24,25, 26,27
-              "GROUP5","GROUP6","GROUP7","GROUP8", #28,29,30,31
+              "SEZIONE1","SEZIONE2","SEZIONE3","SEZIONE4",        #20,21,22,23
+              "NOSSEGRETO","NOSSEGRETISSIMO",                     #24,25
+              "NOSRISERVATO","NOSRISERVATISSIMO",                 #26,27
+              "QNAZIONALE","QNATO","QUE",                         #28,29,30
+              "ACCESSOCIFRA",                                     #31
               "OPERANTENEL2010","OPERANTENEL2011","OPERANTENEL2012", #32,33,34
               "OPERANTENEL2013","OPERANTENEL2014","OPERANTENEL2015"  #35,36,37
              ]
 
-POLICIES = [
+POLICIES = ATTRIBUTES + [
             "(" + ATTRIBUTES[0] + " or " + ATTRIBUTES[1] + " or " + \
             ATTRIBUTES[2] + " ) and " + ATTRIBUTES[31] 
             ,
@@ -38,7 +39,7 @@ POLICIES = [
             ATTRIBUTES[24] + " and " + ATTRIBUTES[25] + " and " + \
             ATTRIBUTES[26] + " and " + ATTRIBUTES[27] + " and " + \
             ATTRIBUTES[37]
-           ] + ATTRIBUTES
+           ]
 
 USERS = [ 
           { "name":"GiuseppeVerdi",
@@ -94,19 +95,7 @@ USERS = [
             "attr": []# ATTRIBUTES 
           }
         ]
-for i in range(1,11):
-    temp = { "name":"User_"+str(i),
-            "pwd":"123",
-            "attr":[ATTRIBUTES[random.randrange(0,4)], 
-                    ATTRIBUTES[random.randrange(4,12)], 
-                    ATTRIBUTES[random.randrange(12,20)],  
-                    ATTRIBUTES[random.randrange(20,24)],
-                    ATTRIBUTES[random.randrange(24,28)],
-                    ATTRIBUTES[random.randrange(28,32)],
-                    ATTRIBUTES[random.randrange(32,38)]
-                   ]
-          }
-    USERS.append(temp)
+
 
 with open(ATTRIBUTES_FILE, "w") as f:            
    f.write(",".join(ATTRIBUTES))

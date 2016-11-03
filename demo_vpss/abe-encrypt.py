@@ -1,6 +1,9 @@
 import sys     
 import os
 
+import time
+from vpss_def import *
+
 # ABE modules
 from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
@@ -73,7 +76,11 @@ def main():
     #print ("outfile = %s\n" % outfile)
 
     # encrypt input file
+    start = time.clock()
     enc_file = cpabe.encrypt(pk, infile, pol)
+    end = time.clock()
+    if verbose: 
+        print ("*** abe-keygen CLOCK TIME: " + str(end - start) + " sec")
 
     #print ("enc_file = %s\n" % enc_file)
 
