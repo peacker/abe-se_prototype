@@ -1,0 +1,111 @@
+% Pacchetto di personalizzazioni LATEX per scrivere documenti per il progetto Cloud
+% Versione 1.0
+% Marco Coppola 1/10/2014
+
+\ProvidesPackage{Cloud}
+
+\RequirePackage[english,italian]{babel}
+\RequirePackage[utf8x]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{pslatex}
+\RequirePackage{scrhack}
+\RequirePackage[automark,headsepline=2.2pt,footsepline=2.2pt,plainheadsepline,plainfootsepline]{scrlayer-scrpage}
+\RequirePackage{graphicx}
+\RequirePackage{amsmath}
+\RequirePackage{amsthm}
+\RequirePackage{amssymb}
+\RequirePackage{algorithm}
+\RequirePackage[noend]{algorithmic}
+\RequirePackage[printonlyused]{acronym}
+\RequirePackage{color}
+\RequirePackage{verbatim}
+\RequirePackage{microtype}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage[table,usenames,dvipsnames]{xcolor}
+\RequirePackage{rotating}
+\RequirePackage{longtable}
+\RequirePackage{stmaryrd}
+\RequirePackage{textcomp }
+\RequirePackage{listings}
+\RequirePackage{xspace}
+\RequirePackage[colorlinks, breaklinks, linkcolor=black,citecolor=blue,filecolor=black,urlcolor=black]{hyperref}
+\RequirePackage{mathtools}
+\RequirePackage[refpage]{nomencl}
+
+\RequirePackage{lastpage}
+\RequirePackage{datetime}
+\RequirePackage{calc}
+\RequirePackage{ifthen}
+\RequirePackage{draftwatermark}
+\RequirePackage{amsfonts}
+\RequirePackage{tocloft}
+\RequirePackage{array}
+
+\newboolean{BFiligrana}
+\newboolean{BToC}
+\newboolean{BToImages}
+\newboolean{BToTables}
+\newboolean{BReferences}
+\newboolean{BAcronimi}
+\newboolean{BListings}
+\newboolean{BRiservato}
+
+\renewcommand*\familydefault{\sfdefault}
+
+%-------------------- Define new column types for tables ---------------------
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+%------------------- Abbreviazioni --------------------------
+\newcommand{\Taddr}{..to be defined}
+\newcommand{\Tshort}{Peacker}
+\newcommand{\Telsy}{to be defined}
+\newcommand{\Tmail}{eemanuele.bellini@gmail.com}
+\newcommand{\Tcompl}{\taddr\\\texttt{\tmail}}
+
+%------------------- Layout --------------------------
+\headheight = 46pt
+\headsep = 14pt
+\oddsidemargin = 0.5cm
+\evensidemargin = 0.5cm
+\textwidth = 15cm
+\footskip = 2cm
+\marginparsep = 10pt
+\marginparwidth = 60pt
+
+%-------- Formattiamo la prima pagina ------------------------------
+\newlength{\hsma}	% Spazio orizzontale a sinistra del blocco dati
+\newlength{\hsmr}	% Larghezza del blocco dati
+\newlength{\vsma}	% Spazio verticale prima del blocco dati
+\setlength\hsma{30mm}	% Spazio orizzontale a sinistra del blocco dati
+\setlength\vsma{45mm}	% Spazio verticale prima del blocco dati
+\setlength\hsmr{\textwidth-1.2\hsma}	% Larghezza del blocco dati
+
+%------------------ Intestazioni e piedipagina---------------------
+\setlength\footheight{1.7cm}
+\newcommand{\MYHONE}{\bfseries\MakeUppercase{\Large\TClass}\\\rule{0pt}{4ex}\TStatus}
+\newcommand{\MYHTWO}{\bfseries \Tshort}
+\newcommand{\MYHTHREE}{\includegraphics[width=20mm,keepaspectratio=true]{tlogobn}}
+\newcommand{\MYFONE}{Pag.~\thepage/\pageref{LastPage}}
+\newcommand{\MYFTWO}{\TProjectID}
+\newcommand{\MYFTHREE}{\rule{0pt}{4ex}\TTitle \hspace*{2em} V.\TVersion\\\rule{0pt}{4ex}\bfseries\MakeUppercase{\Large \TClass}}
+
+\chead[\MYHONE]{\MYHONE}
+\ohead[\MYHTWO]{\MYHTWO}
+\ihead[\MYHTHREE]{\MYHTHREE}
+\ofoot[\MYFONE]{\MYFONE}
+\ifoot[\MYFTWO]{\MYFTWO}
+\cfoot[\MYFTHREE]{\MYFTHREE}
+
+\pagestyle{scrheadings}
+
+% ---------------------- Nomi fissi -----------------------------------------
+\addto\captionsitalian{\renewcommand{\contentsname}{\textit{Indice}}}
+\addto\captionsitalian{\renewcommand{\listfigurename}{\textit{Indice delle Figure}}}
+\floatname{algorithm}{Algoritmo}
+\renewcommand{\listalgorithmname}{\textit{Indice degli Algoritmi}}
+\addto\captionsitalian{\renewcommand{\listtablename}{\textit{Indice delle Tabelle}}}
+\addto\captionsitalian{\renewcommand{\bibname}{\textit{Bibliografia}}}
+\addto\captionsitalian{\renewcommand{\refname}{\bibname}}

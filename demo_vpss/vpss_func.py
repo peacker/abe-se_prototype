@@ -26,6 +26,7 @@ import os
 import time
 
 # ----------------------------------------------------------------------------
+
 """
 verbose = True
 if verbose:
@@ -41,6 +42,7 @@ else:
 # for python 3
 # verboseprint = print if verbose else lambda *a, **k: None
 """
+
 # ----------------------------------------------------------------------------
 
 def create_metadata(vpss_time, encr, sl, gr, pk, pol):

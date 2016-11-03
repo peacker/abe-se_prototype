@@ -1,0 +1,87 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Front Matter.		Blocco informazioni per documentazione_interna.		%
+% Filename FMdocumentazione_interna						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ddmmyyyydate
+%\thispagestyle{fancy}
+%\thispagestyle{myheadings}
+\vspace*{\vsma}
+\hspace*{\hsma}
+\begin{minipage}{\hsmr}
+  \setlength{\parindent}{0pt}
+  \rule{\hsmr}{8pt}
+  \begin{flushleft}
+  {\huge \bfseries \TProject\vspace{1ex}\\\TTitle\\}
+  {\large\hspace*{-1em}
+    \begin{tabular}{ll}
+      \rule{0pt}{20mm}Compilazione:	& {\bfseries\TAuthor}\\
+      Verifica:				& {\bfseries\TVerifiedby}\\
+      Approvazione:			& {\bfseries\TApprouvedby}\\
+      Data creazione:			& {\bfseries\TDatCreat}\\
+      Livello di Classifica:		& {\bfseries\MakeUppercase{\TClass}}\\
+      Data Ultima Modifica:		& {\bfseries\TDatLastMod}\\
+      ID documento:			& {\bfseries \MakeUppercase{\TDocumentID}}\\
+      Versione:				& {\bfseries\TVersion}\\
+      Numero pagine:			& {\bfseries\pageref{LastPage}}\\
+      ID progetto:			& {\bfseries\TProjectID}\\
+      Priorit\`a progetto:		& {\bfseries\TPriority}\\
+      File:				& {\bfseries\TFile}
+    \end{tabular}
+  }
+  \end{flushleft}
+\end{minipage}
+%------- Striscia Rossa per Riservato ---------------
+\ifthenelse{\boolean{BRiservato}}{
+\color{red}
+\vspace*{1cm}
+\\
+\rule{\textwidth}{2cm}
+\color{black}
+}{}
+% ---------------------- Indice ---------------------
+\ifthenelse{\boolean{BToC}\or\boolean{BToImages}\or\boolean{BToTables}\or\boolean{BListings}}{
+  \clearpage
+}{}
+\ifthenelse{\boolean{BToC}}{
+  \chapter*{}
+  \label{sec:Indice}
+  \setcounter{tocdepth}{3}
+  \addxcontentsline{toc}{chapter}{\contentsname}
+%  \setcounter{tocdepth}{4}
+  \tableofcontents
+}{}
+% -------------- Indice delle figure ---------------------
+\ifthenelse{\boolean{BToImages}}{
+  \ifthenelse{\boolean{BToC}}{
+    \medskip
+  }{}
+  \chapter*{}
+  \label{sec:Listafigure}
+  \addxcontentsline{toc}{chapter}{\listfigurename}
+  \setcounter{lofdepth}{2}
+  \listoffigures
+}{}
+% ---------------------- Indice delle tabelle ---------------------
+\ifthenelse{\boolean{BToTables}}{
+  \ifthenelse{\boolean{BToC}\or\boolean{BToImages}}{
+    \medskip
+  }{}
+  \chapter*{}
+  \label{sec:Listatabelle}
+  \addxcontentsline{toc}{chapter}{\listtablename}
+  \setcounter{lotdepth}{2}
+  \listoftables
+}{}
+% ---------------------- Indice degli algoritmi ---------------------
+\ifthenelse{\boolean{BListings}}{
+  \ifthenelse{\boolean{BToC}\or\boolean{BToImages}\or\boolean{BToTables}}{\medskip}{}
+  \chapter*{}
+  \label{sec:Listaalgoritmi}
+  \addxcontentsline{toc}{chapter}{\listalgorithmname}
+  \listofalgorithms
+}{}
+% ---------------------- Controllo di versione --------------------
+\clearpage
+\chapter*{Versione}
+\label{sec:VersionList}
+% \addxcontentsline{toc}{chapter}{\textit{Controllo di versione}}

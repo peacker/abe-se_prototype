@@ -273,7 +273,11 @@ class pnlAuthCPABE(vpss_gui.pnlAuthorityCPABE):
                          selected_attributes, skpath
                        ])
             end = time.clock()
+<<<<<<< HEAD
             #print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+=======
+            print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+>>>>>>> 9c6766e0dbbca85d35bad1bd968ad34ed6874a33
 
             if ret != 0:
                 wx.MessageBox("Errore durante la generazione" + \
@@ -389,7 +393,11 @@ class pnlAuthCPABE(vpss_gui.pnlAuthorityCPABE):
                               "della chiave segreta ABE!", 
                               "Errore", wx.OK | wx.ICON_ERROR)
             end = time.clock()
+<<<<<<< HEAD
             #print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+=======
+            print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+>>>>>>> 9c6766e0dbbca85d35bad1bd968ad34ed6874a33
 
         # abe-setup, overwrites pkpath and mkpath
         start = time.clock()
@@ -399,7 +407,11 @@ class pnlAuthCPABE(vpss_gui.pnlAuthorityCPABE):
                     PUBLIC_PARAMETERS_FOLDER, pkpath, mkpath
             ])
         end = time.clock()
+<<<<<<< HEAD
         #print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+=======
+        print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+>>>>>>> 9c6766e0dbbca85d35bad1bd968ad34ed6874a33
 
         if ret != 0:
             wx.MessageBox("Errore durante il setup ABE!", 
@@ -619,7 +631,11 @@ class pnlAuthCPABE(vpss_gui.pnlAuthorityCPABE):
                              attr_list, skpath
                            ])
                 end = time.clock()
+<<<<<<< HEAD
                 #print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+=======
+                print ("DONE - CLOCK TIME: " + str(end - start) + " sec")
+>>>>>>> 9c6766e0dbbca85d35bad1bd968ad34ed6874a33
 
                 if ret != 0:
                     wx.MessageBox("Errore durante la generazione" + \
