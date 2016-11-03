@@ -1,0 +1,100 @@
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+CAUSE: When clicking "Carica sul cloud"
+------
+
+[u'parola1', u'parola2', u'parola3']
+['ab819025dbd70f5d3874c3ec2398b96d', '3ed8e2dd7edc7ef51a55145c1e0d9398', '3aeac3a1752f896966f775fd62fc31f0']
+Traceback (most recent call last):
+  File "vpss.py", line 1227, in OnUpload
+    ftp.storbinary("STOR " + fileout, open(filein, "rb"))
+  File "/usr/lib/python2.7/ftplib.py", line 471, in storbinary
+    conn = self.transfercmd(cmd, rest)
+  File "/usr/lib/python2.7/ftplib.py", line 376, in transfercmd
+    return self.ntransfercmd(cmd, rest)[0]
+  File "/usr/lib/python2.7/ftplib.py", line 339, in ntransfercmd
+    resp = self.sendcmd(cmd)
+  File "/usr/lib/python2.7/ftplib.py", line 249, in sendcmd
+    return self.getresp()
+  File "/usr/lib/python2.7/ftplib.py", line 224, in getresp
+    raise error_perm, resp
+ftplib.error_perm: 550 Permission denied.
+
+
+SOLUTION:
+---------
+Re-run 
+bash INSTALL_SERVER.sh
+
+or
+
+Check files:
+- /etc/vsftpd.user_list
+  must contain user "cloud"
+- /etc/vsftpd.conf
+  must contain the following lines:
+  - local_enable=YES
+  - write_enable=YES
+  - userlist_enable=YES
+  - userlist_deny=NO
+  - userlist_file=/etc/vsftpd.user_list
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+CAUSE: When typing from cmd line
+------ python SET_ALL.py 
+
+======================================================================
+Setting up authority folders...
+Setting up authority database...
+Error 2002: Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
+Traceback (most recent call last):
+  File "SET_AUTHORITY_server.py", line 157, in <module>
+    if con:    
+NameError: name 'con' is not defined
+======================================================================
+Setting up client folders...
+Done!
+======================================================================
+Setting up search database...
+Error 2002: Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
+Traceback (most recent call last):
+  File "SET_SEARCH_server.py", line 89, in <module>
+    if con:    
+NameError: name 'con' is not defined
+======================================================================
+Setting up cloud ftp server...
+Done!
+
+
+SOLUTION:
+---------
+
+sudo gedit /etc/mysql/my.cnf
+set:
+bind-address = 127.0.0.1
+sudo service mysql restart
+
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+
+CAUSE: generating keys from authority window (when clicking "genera")
+------ 
+Traceback (most recent call last):
+  File "abe-setup.py", line 72, in <module>
+    main()
+  File "abe-setup.py", line 49, in main
+    groupObj = PairingGroup(group_name)
+  File "/usr/local/lib/python3.4/dist-packages/charm/toolbox/pairinggroup.py", line 17, in __init__
+    assert pairID != None, "'%s' not recognized! See 'pairingcurves.py' in toolbox." % param_id
+AssertionError: 'SS_e_R256Q3072' not recognized! See 'pairingcurves.py' in toolbox.
+
+SOLUTION:
+---------
+
+sudo cp pairingcurves.py /usr/local/lib/python3.4/dist-packages/charm/toolbox/pairingcurves.py
+
+

@@ -1,0 +1,203 @@
+FOLDERS
+-------
+
+/authority
+  /master_keys
+  /user_data
+
+/public_parameters
+  - 
+
+/users
+  /utente1
+    /plaintexts
+    /ciphertexts
+    /secret_keys
+      /ABE_sk
+      /AES_sk
+  /utente2
+    /plaintexts
+    /ciphertexts
+    /secret_keys
+      /ABE_sk
+      /AES_sk
+  /...
+
+/cloud
+  - file1.enc
+  - file1.k.enc
+  - ...
+
+
+COMMANDS INPUT/OUTPUT:
+----------------------
+
+* COMMAND
+  python3 abe-setup.py 'SS512'
+  - GENERATES FILES:
+    + groupname.g
+    + master.k
+    + public.k
+  - NEEDS FILES:
+    none
+
+
+* COMMAND
+  python3 abe-setup.py 
+  - same as with argument but defines 'SS512' as default group
+
+
+* COMMAND
+  python3 abe-keygen.py ATTR1 ATTR3
+  - GENERATES FILES:
+    + secret.k
+  - NEEDS FILES:
+    + groupname.g
+    + master.k
+    + public.k
+
+
+* COMMAND
+    python3 abe-encrypt.py [PK_NAME] [POLICY] [USER_NAME]
+  EX:
+    python3 abe-encrypt.py public.k '((ATTR1 or ATTR2) and (ATTR3 or ATTR4))' utente1
+
+  - GENERATES FILES:
+    files are written in the folder 
+    /users/[USER_NAME]/secret_keys/AES_sk
+    + symmetric.k
+    + symmetric.k.enc
+  - NEEDS FILES:
+    + groupname.g (read in the folder [CURRENT_WORKING_DIRECTORY]/public_parameters/ )
+    + public.k (read in the folder [CURRENT_WORKING_DIRECTORY]/public_parameters/public.k )
+  - other INPUTS needed:
+    + policy
+    + user folder
+
+
+* COMMAND
+    python3 abe-decrypt.py [PK_NAME] [SK_NAME] [ENC_FILE] [USER_NAME]
+  EX:
+    python3 abe-decrypt.py public.k utente1_sk.k prova1.txt.k.enc utente1
+
+  - GENERATES FILES:
+    + symmetric.k, in folder ../users/[USER_NAME]/secret_keys/AES_sk
+  - NEEDS FILES:
+    + groupname.g
+    + public.k
+    + secret.k, in folder ../users/[USER_NAME]/secret_keys/ABE_sk
+    + symmetric.k.enc, in folder ../users/[USER_NAME]/secret_keys/AES_sk
+
+
+* COMMAND
+    python3 aescrypt.py -f [FILE_NAME] [SECRET_KEY_FILE_NAME] [USER_NAME]
+  EX:
+    python3 aescrypt.py -f prova.txt symmetric.k utente1
+
+  - DESCRIPTION
+    + Reads password from 
+      [CURRENT_WORKING_DIRECTORY]/secret_keys/AES_sk/[SECRET_KEY_FILE_NAME]
+    + Uses PBKDF2 (pbkdf2.py, password-based key derivation function)
+      to derive salt, iv and key
+    + "-f" overwrites "prova.txt.enc" if already exists
+  - GENERATES FILES:
+    + [FILE_NAME].enc in the folder [CURRENT_WORKING_DIRECTORY]/ciphertexts
+  - NEEDS FILES:
+    + [FILE_NAME], e.g. prova.txt
+    + [SECRET_KEY_FILE_NAME],   e.g. symmetric.k
+
+
+* COMMAND
+    python3 aescrypt.py -f [FILE_NAME] [SECRET_KEY_FILE_NAME] [USER_NAME]
+  EX:
+    python3 aescrypt.py -d -f prova.txt symmetric.k utente1
+
+  - DESCRIPTION
+    As previous command
+  - GENERATES FILES:
+    + prova.txt
+  - NEEDS FILES:
+    + symmetric.k
+
+
+
+EXAMPLE:
+--------
+
+- in file
+  "choose_abe_scheme.py"
+  define the ABE scheme to be used
+
+- then run the following commands
+
+# -------------------
+
+# ABE setup/keygen
+python3 abe-setup.py 'SS512'
+# python3 abe-keygen.py ATTR1 
+# python3 abe-keygen.py ATTR1 ATTR2 
+# python3 abe-keygen.py ATTR1 ATTR2 ATTR3
+# python3 abe-keygen.py ATTR1 ATTR2 ATTR3 ATTR4
+python3 abe-keygen.py ATTR1 ATTR2 ATTR3 ATTR4 ATTR5
+
+mv groupname.g public_parameters/groupname.g
+mv public.k public_parameters/public.k
+mv secret.k users/utente1/secret_keys/ABE_sk/secret.k
+
+# -------------------
+
+
+# ABE generate random point on elliptic curve
+python3 abe-random-ec-point.py \
+        ./public_parameters/groupname.g \
+        ./users/utente1/secret_keys/AES_sk/symmetric.k
+
+# ABE encryption
+python3 abe-encrypt.py \
+        ./public_parameters/groupname.g \
+        ./public_parameters/public.k \
+        '(ATTR1 and ATTR2)' \
+        ./users/utente1/secret_keys/AES_sk/symmetric.k \
+        ./users/utente1/ciphertexts/prova.txt.k.enc
+
+
+# AES encryption
+python3 aescrypt.py -f \
+        ./users/utente1/plaintexts/prova.txt \
+        ./users/utente1/ciphertexts/prova.txt.enc \
+        ./users/utente1/secret_keys/AES_sk/symmetric.k 
+
+rm users/utente1/secret_keys/AES_sk/symmetric.k 
+rm users/utente1/plaintexts/prova.txt
+
+# -------------------
+
+# ABE decryption
+python3 abe-decrypt.py \
+        ./public_parameters/groupname.g \
+        ./public_parameters/public.k \
+        ./users/utente1/secret_keys/ABE_sk/secret.k \
+        ./users/utente1/ciphertexts/prova.txt.k.enc \
+        ./users/utente1/secret_keys/AES_sk/symmetric.k 
+
+# AES decryption
+python3 aescrypt.py -d -f \
+        ./users/utente1/ciphertexts/prova.txt.enc \
+        ./users/utente1/plaintexts/prova.txt \
+        ./users/utente1/secret_keys/AES_sk/symmetric.k 
+
+
+-------------------
+
+- NB: for some reason attributes names must be uppercase!
+
+-------------------
+
+python3 aescrypt_original.py -f /home/ema/Dropbox/ACCADEMIC/Programmi/Python/wxPython/cpabe/users/utente1/plaintexts/prova.txt /home/ema/Dropbox/ACCADEMIC/Programmi/Python/wxPython/cpabe/users/utente1/ciphertexts/prova.txt.enc
+
+
+
+python3 aescrypt_original.py -d -f /home/ema/Dropbox/ACCADEMIC/Programmi/Python/wxPython/cpabe/users/utente1/ciphertexts/prova.txt.enc /home/ema/Dropbox/ACCADEMIC/Programmi/Python/wxPython/cpabe/users/utente1/plaintexts/prova.txt
+
+
+
