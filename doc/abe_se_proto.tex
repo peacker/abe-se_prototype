@@ -1,0 +1,1574 @@
+\documentclass[a4paper,twoside,10pt,openany]{scrbook}
+\usepackage{Cloud}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{courier}
+\usepackage{seqsplit}
+
+% for hyperlinks
+\hypersetup{%
+  colorlinks=true,% hyperlinks will be coloured
+  linkcolor=blue,% hyperlink text color
+  linkbordercolor=blue,% hyperlink border will be red
+}
+\makeatletter
+\Hy@AtBeginDocument{%
+  \def\@pdfborder{0 0 1}% Overrides border definition set with colorlinks=true
+  \def\@pdfborderstyle{/S/U/W 0}% Overrides border style set with colorlinks=true
+                                % Hyperlink border style will be underline of width 0pt
+}
+\makeatother
+
+\setcounter{secnumdepth}{3} % default value for 'report' class is "2"
+
+% ---------------------- Proprietà del Documento ---------------------
+% Personalizzare con i dati necessari
+
+\newcommand{\TTitle}{Prototipo ABE-SE: Manuale Utente}
+\newcommand{\TDocumentID}{ID}
+\newcommand{\TStatus}{Release}
+\newcommand{\TClass}{Non classificato}
+\newcommand{\TDiffusione}{D}
+\newcommand{\TProject}{Cifrature per il Cloud}
+\newcommand{\TAuthor}{E.~Bellini}
+\newcommand{\TVerifiedby}{-}
+\newcommand{\TApprouvedby}{-}
+\newcommand{\TDatCreat}{26/08/2015}
+\newcommand{\TDatLastMod}{\today}
+\newcommand{\TVersion}{1.0}
+\newcommand{\TProjectID}{000}
+\newcommand{\TPriority}{None}
+\newcommand{\TFile}{\jobname}
+\newcommand{\TFiligrana}{\TClass}
+\newcommand{\TBibFile}{Cloud}
+
+% ------------------- Booleani di configurazione --------------------
+% True abilita e False disabilita la funzione (o sezione) corrispondente
+\setboolean{BFiligrana}{False}	% Stampa in filigrana
+\setboolean{BToC}{True}		% Indice del documento
+\setboolean{BToImages}{False}	% Indice delle immagini
+\setboolean{BToTables}{False}	% Indice delle tabelle
+\setboolean{BAcronimi}{True}	% Acronimi
+\setboolean{BReferences}{True}	% Bibliografia
+\setboolean{BListings}{False}	% Algoritmi
+\setboolean{BRiservato}{False}	% Striscia rossa per documenti riservati
+
+% ---------------------- Marcatura in filigrana ---------------------
+\ifthenelse{\boolean{BFiligrana}}{\SetWatermarkText{\TFiligrana}}{\SetWatermarkText{}}
+
+% ------ Definizioni specifiche per il documento --------------------
+
+\begin{document}
+\input{FrontMatter}	% Front Matter per documentazione Telsy
+\newlength{\LastCol}
+\setlength{\LastCol}{\textwidth - 208.4pt - 5mm}
+{ \begin{tabular}{ | p{20mm} | p{15mm} | p{25mm} | p{\LastCol} |}
+    \hline
+    \rule{0pt}{4ex}\em{Data}	& \em{Versione}	& \em{Nome file}	& \em{Descrizione}\\\hline
+    \rule{0pt}{2ex}\TDatLastMod	& \TVersion  	& \TFile      		& Rilascio iniziale\\\hline
+   \end{tabular}
+}
+\clearpage
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
+\linespread{1}
+% ------------------------------ Acronimi -------------------------
+
+\ifthenelse{\boolean{BAcronimi}}{
+  \chapter*{Acronimi e abbreviazioni}
+  \label{sec:Abbrevs}
+  \addxcontentsline{toc}{chapter}{\textit{Acronimi e abbreviazioni}}
+  \input{acronyms}
+
+  \newcommand{\vpss}{\ac{VPSS}\,}
+  \newcommand{\auth}{Authority\,}
+  \newcommand{\user}{Utente\,}
+  \newcommand{\users}{Utenti\,}
+  \newcommand{\client}{Client\,}
+  \newcommand{\sr}{Server di Ricerca\,}
+  \newcommand{\sa}{Server di Archiviazione\,}
+  \newcommand{\abemk}{Chiave Master ABE\,}
+  \newcommand{\abepk}{Chiave Pubblica ABE\,}
+  \newcommand{\abesk}{Chiave Segreta di Decifratura ABE\,}
+  \newcommand{\searchsk}{Chiave Segreta di Ricerca\,}
+  \newcommand{\spepk}{Chiave Pubblica SPE\,} % SPE = Standard Public Encryption
+  \newcommand{\spesk}{Chiave Segreta SPE\,}
+  
+  \newcommand{\versioneDimostratore}{1.0}  
+  \clearpage
+}{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%% Cominciare da qui la stesura del documento %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\acresetall
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Introduzione}\label{sec:intro}
+%
+Uno dei principali scopi del progetto è la definizione di un'architettura \ac{VPSS} che integri funzionalità di \ac{MLS} e di \textit{Searchable Encryption}. E\` stata realizzata anche un'implementazione software dimostrativa (\textbf{Dimostratore \ac{VPSS}}, versione \textbf{\versioneDimostratore}, di cui questo documento costituisce la descrizione ed il manuale d'uso.\\
+%
+Dato il fine dimostrativo, lo sviluppo del software è stato focalizzato su elementi innovativi come Attribute-Based Encryption e Searchable Encryption, non curandosi di altri aspetti che, per quanto fondamentali in un sistema di sicurezza completo, sono qui di scarso interesse e renderebbero inutilmente macchinoso l'utilizzo del Dimostratore. Di conseguenza funzioni tipiche del sistema operativo, quali l'identificazione degli utenti al login e la separazione delle loro aree di storage, sono state implementate con meccanismi elementari e più pratici, benché privi di effettiva sicurezza.\\
+%
+Analogamente è offerta per semplicità la possibilità di mantenere sulla stessa macchina tutte le entità previste dal sistema: un'\auth, gli Utenti, un \sa e un \sr (si veda \ref{sec:entita}). E' tuttavia immaginabile che questo non sia il caso in un'ipotetica realizzazione concreta di quanto descritto\footnote{In ogni caso il Dimostratore consente di porre i server su macchine distinte.}, nella quale verosimilmente l'\auth sarebbe implementata su una macchina dedicata \textit{trusted}, gli utenti su client individuali, il \sr su una macchina non necessariamente \textit{trusted} e infine il \sa su un servizio di Cloud.\\
+%
+Il Dimostratore è stato realizzato integrando librerie di pubblico dominio con codice appositamente sviluppato, prevalentemente nei linguaggi C e Python, ed è installabile sia in ambiente Windows sia in ambiente Linux. Una volta installato fornisce un Client che permette di simulare l'attività sia degli utenti sia dell'Authority.
+%
+\section{Organizzazione del documento}
+Il documento è così organizzato:
+\begin{itemize}
+ \item il Capitolo \ref{sec:archgen} fornisce una descrizione sintetica dell'architettura generale del sistema\ac{VPSS};
+ \item il Capitolo \ref{sec:installazione} descrive la procedura di installazione del Dimostratore per Windows Seven e per Linux (Ubuntu 14.04);
+ \item il Capitolo \ref{sec:setup} ne descrive invece la procedura di inizializzazione;
+ \item il Capitolo \ref{sec:utilizzo} ne descrive l'utilizzo a regime;
+ \item il Capitolo \ref{sec:oggettisistema} è infine dedicato alla descrizione dettagliata degli oggetti crittografici utilizzati e del loro formato.
+\end{itemize}
+% \begin{itemize}
+%  \item \hyperref[sec:scenario]{scenario di utilizzo del dimostratore},
+%  \item \hyperref[sec:installazione]{procedura di installazione del programma},
+%  \item \hyperref[sec:setup]{procedura di setup del programma},
+%  \item \hyperref[sec:utilizzo]{utilizzo del programma}.
+% \end{itemize}
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\chapter{Architettura generale}\label{sec:archgen}
+In questo capitolo viene fornita una descrizione schematica del Dimostratore VPSS. Innanzitutto ne viene ricordato lo scenario di utilizzo, poi, dopo aver rapidamente ricordato le caratteristiche della ciphertext-policy \ac{ABE} (\ref{sec:cpabe}), se ne descrive l'architettura generale. In particolare si definiscono le entità coinvolte nel sistema considerato e si considerano le funzioni di ciascuna di esse.
+%
+\section{Scenario di utilizzo}
+Descriviamo brevemente l'architettura implementata dal Dimostratore.
+%\begin{itemize}
+%\item 
+Essa prevede un insieme di utenti che, avendo accesso ad un'area comune di memorizzazione, possono condividere dati in modo sicuro secondo una logica di \ac{MLS}, in cui la compartimentazione non viene eseguita a livello fisico ma a livello logico tramite adeguate tecniche crittografiche. \\
+Più precisamente nell'area di memorizzazione, implementata tramite uno specifico \sa, i dati vengono posti in forma cifrata con tecniche \ac{ABE}. La cifratura utilizzata determina la possibilità di accesso (o meno) di un utente in funzione degli attributi che gli sono stati riconosciuti.
+Più precisamente, un ente preposto (\auth nel linguaggio \ac{ABE}) in fase di attivazione riconosce ad ogni utente certi attributi ed in funzione di questi genera e gli assegna una specifica chiave privata (nel seguito \emph{\abesk}). Tale chiave mette l'utente in grado di decifrare tutti i messaggi cifrati secondo una policy soddisfatta dai suoi attributi. La cifratura avviene invece tramite una chiave pubblica (nel seguito \emph{\abepk}), unica in tutto il sistema e comunicata dall'\auth a tutti gli utenti\footnote{Si osservi che, come in ogni sistema a chiave asimmetrica, per cifrare un messaggio è sufficiente conoscere la chiave pubblica. La \ac{ABE} è però caratterizzata dal fatto che tale chiave non è specifica per ogni utente ma è unica nel sistema.}.\\ 
+%\item 
+E' previsto inoltre che sui dati cifrati possa essere eseguita una forma (limitata) di ricerca di parole chiave o altri metadati, appoggiandosi a questo scopo ad un secondo server (\sr) sul quale vengono memorizzate, anch'esse in forma cifrata, le parole chiave associate ad ogni file memorizzato sul \sa. Tale associazione viene definita dall'utente generatore dei dati nel momento in cui li condivide salvandone il contenuto del file sul \sa. La cifratura delle parole chiave, che vengono così rese inaccessibili al \sr, è ottenuta tramite tecniche simmetriche convenzionali e una chiave (nel seguito \emph{\searchsk}) condivisa tra tutti gli utenti, generata e distribuita dall'\auth.
+I due server non hanno tra loro alcuna interazione tra loro né alcun accesso ai dati in chiaro.\\
+Per completezza osserviamo infine che, come in ogni schema \ac{ABE} (si veda \ref{sec:cpabe}), è prevista anche una \emph{\abemk}.\\
+%\end{itemize}
+%
+Nello scenario così definito, le funzioni offerte agli utenti sono così le seguenti:
+\begin{itemize}
+ \item cifrare e decifrare (in locale);
+ \item caricare file cifrati sul \sa, associandovi parole chiave che vengono invece caricate, in forma cifrata, sul \sr;
+ \item effettuare ricerche sui file cifrati caricati nel \sa, utilizzando combinazioni di parole chiave cifrate da sottoporre al \sr;
+ \item scaricare file cifrati dal \sa.
+\end{itemize}
+Come mostrato in \ref{sec:window_user}, nel Dimostratore queste funzioni sono mantenute distinte, allo scopo di evidenziare la separazione concettuale tra le operazioni di
+\begin{itemize}
+ \item cifra/decifra, realizzata secondo schemi \ac{ABE} (integrati a schemi di cifratura simmetrica, come AES);
+ \item ricerca su dati cifrati, realizzata secondo uno schema di Searchable Encryption;
+ \item trasferimento dati, realizzato con protocolli standard.
+\end{itemize}
+%
+\section{Ciphertext-Policy Attribute-Based Encryption}\label{sec:cpabe}
+Per schemi di cifratura basata sugli attributi di tipo ciphertext-policy (Attribute-Based Encryption Schemes, in breve schemi CP-ABE), si intende un insieme di schemi di cifratura con le seguenti caratteristiche:
+\begin{itemize}
+ \item ad ogni utente del sistema è fornita una \abepk (comune a tutti gli utenti) necessaria per eseguire le operazioni di cifratura;
+ \item ad ogni utente viene associato un insieme di attributi che ne descrivono le caratteristiche;
+ \item ad ogni utente viene assegnata una \abesk che ne incorpora (intrinsecamente ed in maniera crittografica) gli attributi;
+ \item ogni messaggio cifrato incorpora (intrinsecamente ed in maniera crittografica) una \textit{policy} sugli attributi, che può essere o meno soddisfatta dagli attributi di un utente. La policy è stabilita \textit{run time} dal mittente del messaggio e il messaggio è decifrabile esclusivamente (tramite la chiave segreta) dagli utenti i cui attributi (incorporati nella chiave) soddisfano la policy;
+ \item la generazione di tutte le chiave e l'associazione di un utente con un insieme di attributi sono compiti di un entità \textit{trusted} detta \auth. L'\auth inoltre possiede una \abemk segreta da cui può derivare tutte le altre chiavi, incluse quelle degli utenti.
+\end{itemize}
+%
+\section{Entità definite}\label{sec:entita}
+Le entità definite nel Dimostratore sono le seguenti:
+\begin{itemize}
+ \item \auth
+ \item Utenti
+ \item \sr
+ \item \sa
+\end{itemize}
+\subsection{\auth}\label{sec:authority}
+L'\auth è un utente speciale del programma dotato di funzionalità che gli permettono di preparare il sistema all'utilizzo, di creare e rimuovere utenti, generare e revocare le chiavi di cifratura e decifratura, tramite la loro rigenerazione (\ref{sec:auth_setup}).\\
+L'\auth in sé non è un utente come gli altri, ma può decidere di creare un utente personalizzato con il quale effettuare le operazioni permesse agli altri utenti.\\
+Le funzionalità dell'\auth sono descritte nella Sezione \ref{sec:funzionalita_authority}.
+%
+\subsection{Utente}\label{sec:users}
+L'entità Utente è dotata di uno username ed una password che gli permettono di accedere al programma. \\
+Le funzionalità di un utente sono descritte nella Sezione \ref{sec:funzionalita_utente}.
+%
+\subsection{Server di Archiviazione}\label{sec:serverarch}
+Il \sa offre un'area di storage comune a tutti gli utenti tramite cui vengono scambiati i dati cifrati. Dal punto di vista implementativo può essere un'area condivisa su un servizio di Cloud. Non è un'entità \textit{trusted}.
+Le funzionalità del \sa sono descritte nella Sezione \ref{sec:cloud_server}.
+%
+\subsection{\sr}\label{sec:serverric}
+Il \sr offre un semplice servizio di database con elementari query di ricerca. Non è un'entità \textit{trusted}. 
+Le funzionalità del \sr sono descritte nella Sezione \ref{sec:search_server}.
+
+\section{Funzionalità di ciascuna entità}\label{sec:funzionalita}
+\subsection{\auth}\label{sec:funzionalita_authority}
+%\subsubsection{Server dell'\auth}\label{sec:auth_server}
+L'\auth possiede un server che accede ad un database contenente i seguenti dati
+\begin{itemize}\label{sec:auth_server}
+ \item nomi degli utenti;
+ \item password degli utenti (si veda \ref{sec:users});
+ \item elenco di attributi associati a ciascun utente.
+\end{itemize}
+L'\auth svolge le seguenti funzioni:
+\begin{itemize}
+ \item \hyperref[sec:auth_setup]{\emph{Setup del sistema}}
+ \item \hyperref[sec:auth_createuser]{\emph{Creazione di un nuovo utente}}
+ \item \hyperref[sec:auth_deleteuser]{\emph{Rimozione di un utente}}
+\end{itemize}
+\subsubsection{Setup del sistema}\label{sec:auth_setup}
+Durante questa fase, dati un livello di sicurezza ed una curva ellittica ad esso corrispondente (la curva è un parametro chiave della definizione di uno schema '\ac{ABE}, si veda \ref{sec:ec}), l'\auth genera una \abemk, mantenuta segreta, ed una \abepk, che viene invece distribuita a tutti gli utenti. Il Setup del sistema viene eseguito una prima volta alla prima installazione e nuovamente quando si presenta la necessità di cambiare i parametri di sicurezza.
+\subsubsection{Creazione di un utente}\label{sec:auth_createuser}
+Durante questa fase l'\auth definisce un nuovo utente tramite uno \emph{username} ed una \emph{password}. Genera una Chiave Utente Segreta di Decifratura e la fornisce all'utente creato.
+\subsubsection{Rimozione di un utente}\label{sec:auth_deleteuser}
+Durante questa fase l'\auth rimuove un utente dal sistema, cancellando i dati dello stesso dal proprio database.\\
+%
+\subsection{Utenti}\label{sec:funzionalita_utente}
+Un utente può svolgere le seguenti funzioni
+\begin{itemize}
+ \item \hyperref[sec:user_enc]{\emph{Cifratura}} di un file locale\footnote{Per file \textit{locale} si intende memorizzato nell'area privata dell'utente. La cifratura di un file locale genera un altro file locale (idem per la decifratura). Un file locale (cifrato) può essere caricato sul \sa oppure essere da questo scaricato per venire poi decifrato.};
+ \item \hyperref[sec:user_dec]{\emph{Decifratura}} di un file locale;
+ \item \hyperref[sec:user_upload]{\emph{Caricamento}} di un file locale sul \sa;
+ \item \hyperref[sec:user_search]{\emph{Ricerca}} tramite parole chiave cifrate tra i file nel \sa;
+ \item \hyperref[sec:user_download]{\emph{Scaricamento}} in locale di un file sul \sa.
+\end{itemize}
+Ogni utente ha a disposizione i seguenti parametri privati
+\begin{itemize}
+ \item Una \hyperref[sec:sk]{Chiave Segreta di decifratura}
+ \item Una \hyperref[sec:searchk]{Chiave Segreta di ricerca}
+\end{itemize}
+ed i seguenti parametri pubblici 
+\begin{itemize}
+ \item Una \hyperref[sec:pk]{Chiave Pubblica} (si veda \ref{sec:auth_setup});
+% \item Il nome della \hyperref[sec:ec]{Curva Ellittica} utilizzata per gli schemi ABE (la curva ellittica è uno dei parametri crittografici coinvolti nella definizione di uno schema \ac{ABE}, si veda \ref{sec:ec}); 
+ \item Il \hyperref[sec:time]{Tempo} del sistema (un contatore che viene incrementato ad ogni nuova generazione di Chiave Pubblica da parte dell'\auth (si veda \ref{sec:time})).
+\end{itemize}
+Ha inoltre a disposizione una propria area di memoria in cui memorizzare i file in chiaro ed un'altra per i file cifrati.
+%
+\subsubsection{Cifratura}\label{sec:user_enc}
+Tramite la \hyperref[sec:pk]{Chiave Pubblica}, ogni utente è in grado di cifrare un messaggio a cui deve associare una \hyperref[sec:create_policy]{policy} ammissibile. 
+Notiamo che quindi, in linea di principio, anche un utente senza Chiave Segreta di Decifratura è in grado di cifrare in quanto la Chiave di Cifratura è pubblica. 
+%
+\subsubsection{Decifratura}\label{sec:user_dec}
+Ogni utente in possesso di una \hyperref[sec:sk]{Chiave Segreta di decifratura} è in grado di decifrare solamente i testi cifrati la cui \hyperref[sec:create_policy]{policy} associata è soddisfatta dagli attributi della \hyperref[sec:sk]{Chiave Segreta di decifratura}.
+%
+\subsubsection{Upload}\label{sec:user_upload}
+Ogni utente può caricare file cifrati sul \sa.
+Inoltre ha la possibilità, al momento del caricamento, di associare al file cifrato un elenco cifrato di parole chiave, che verranno memorizzate solamente dal \sr e in modo disaccoppiato con il \sa (l'accoppiamento può essere ristabilito solo dagli utenti attraverso il percorso di memorizzazione sul \sa, si veda \ref{sec:search_server}).
+%
+\subsubsection{Ricerca}\label{sec:user_search}
+Ogni utente in possesso di una \hyperref[sec:sk]{Chiave Segreta di ricerca} è in grado di effettuare ricerche cifrate tra i file nel \sa. 
+La ricerca avviene inviando al \sr una formula Booleana le cui foglie contengono possibili parole chiave cifrate (si noti che la struttura della formula non è cifrata). Il \sr restituirà il percorso (sul \sa) e altri metedati dei file cifrati le cui parole chiave associate soddisfano tale formula (si veda \ref{sec:search_server}).
+%
+\subsubsection{Download}\label{sec:user_download}
+Ogni utente può scaricare i file cifrati che desidera dal \sa.
+Si noti che tuttavia non sarà in grado di decifrare i file la cui policy non è soddisfatta dagli attributi dell'utente stesso.
+%
+\subsection{\sa}\label{sec:cloud_server}
+Il \emph{\sa} serve per la memorizzazione remota dei file cifrati. Esso contiene esclusivamente i file cifrati nel formato definito nella Sezione \ref{sec:format_ct}. Il \sa non viene mai a conoscenza delle parole chiave cifrate associate a ciascun file.
+%
+\subsection{\sr}\label{sec:search_server}
+Il \emph{\sr} possiede un database in cui memorizza i metadati relativi a ciascun file che è stato caricato sul \sa.\\
+I metadati associati a ciascun file cifrato sono i seguenti
+\begin{itemize}
+ \item insieme di parole chiave cifrate per la ricerca (l'insieme può anche essere vuoto),
+ \item policy associata,
+ \item nome del file cifrato,
+ \item percorso del file cifrato nel \sa,
+ \item nome del file utilizzato come chiave pubblica,
+ \item nome del file utilizzato per il nome della curva ellittica (\ref{sec:ec}),
+ \item livello di sicurezza della cifratura,
+ \item nome dell'utente che ha cifrato il file,
+ \item data di upload con precisione al secondo,
+ \item tempo del sistema in cui è stato cifrato il file.
+\end{itemize}
+I primi due (insieme di parole chiave e policy associata) sono selezionate dall'utente, le altre inserite in modo automatico.
+%
+%
+% \section{Architettura del Dimostratore VPSS}\label{sec:architettura}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\chapter{Installazione}\label{sec:installazione}
+%
+L'installazione del Dimostratore VPSS si divide in tre passi:
+\begin{enumerate}
+ \item installazione del programma Client (\hyperref[sec:authority]{\auth} e \hyperref[sec:users]{Utenti}),
+ \item installazione del server MySql (\hyperref[sec:search_server]{\sr} e \hyperref[sec:auth_server]{Server dell'\auth}),
+ \item installazione del server FTP (\hyperref[sec:cloud_server]{\sa)}.
+\end{enumerate}
+%
+L'installazione del Client fornisce un programma ad interfaccia grafica, che permette di loggarsi al sistema come \auth o come Utente standard. Ricordando le finalità puramente dimostrative del programma, per semplicità le aree di memoria destinate ad ogni utente (contenenti la chiave segreta ed i testi in chiaro) possono risiedere sullo stesso pc, anche se  idealmente gli utenti dovrebbero lavorare su macchine fisicamente separate. \\
+L'installazione del server MySql fornisce un programma che simula il \hyperref[sec:auth_server]{Server dell'\auth} e il \hyperref[sec:search_server]{\sr}. 
+Nel primo viene creato un database contenente i dati relativi agli utenti (nome utente, password e attributi). 
+Nel secondo viene creato un database contenente i metadati (cifratore, livello di sicurezza, chiave pubblica utilizzata, percorso del file, ecc.) di ogni file cifrato caricato sul \sa, incluso un insieme di parole chiave cifrate associate al testo cifrato.\\
+L'installazione del server FTP fornisce il \hyperref[sec:cloud_server]{\sa} dei file cifrati (cloud), senza le parole chiave cifrate associate.\\
+%
+\indent
+Il Dimostratore VPSS si appoggia su diverse librerie scritte in linguaggio Python e C. Di seguito viene fornito un elenco delle principali librerie con una breve descrizione:
+\begin{itemize}
+ \item CHARM \cite{charm13}. Fornisce uno strumento per realizzare in maniera rapida prototipi crittografici. Implementata in linguaggio Python. \url{http://charm-crypto.com/}
+ \item PBC. Libreria scritta in linguaggio C per lo sviluppo di schemi crittografici basati sui pairing. Costruita sulla libreria GMP. \url{https://crypto.stanford.edu/pbc/}
+ \item OpenSSL. E' uno strumento opensource per la realizzazione di protocolli SSL ed altre primitive crittografiche. Implementata in linguaggio C. \url{https://www.openssl.org/}
+ \item GMP. Libreria per l'aritmetica a precisione arbitraria, interi con segno, numeri razionali e numeri in virgola mobile. Implementata in linguaggio C. \url{https://gmplib.org/}
+\end{itemize}
+Alcune di queste librerie sono fornite solo per ambiente di sviluppo Linux. Tale ambiente può essere simulato su un sistema operativo Windows tramite il software MinGW.\\
+%
+%
+\section{Materiale fornito}
+%
+\section{Installazione in Windows 7}
+%
+Le istruzioni che seguono sono state testate su una macchina a 64 bit con sistema operativo Windows 7 in lingua inglese.\\
+NOTA IMPORTANTE: tutti i programmi installati devono essere per piattaforme a 32 bit.\\
+Seguire le istruzioni di installazione nell'ordine in cui sono presentate.\\
+Eseguire le istruzioni della Sezione \ref{sec:installazione_client} sulla macchina in cui si vuole avviare il Client (sia per simulazione Utenti, che per simulazione \auth).\\
+Eseguire le istruzioni della Sezione \ref{sec:installazione_mysql} sulla macchina in cui si vuole installare il \sr e sulla macchina in cui si vuole utilizzare il Client per la simulazione \auth (poiché anche essa possiede un database).\\
+Eseguire le istruzioni della Sezione \ref{sec:installazione_ftp} sulla macchina in cui si vuole installare il \sa.\\
+%
+\subsection{Installazione Client}\label{sec:installazione_client}
+Eseguire le istruzioni in questa sezione sulla macchina in cui si desidera utilizzare il Client per la simulazione Utenti e per la simulazione \auth.
+%
+\subsubsection{MinGw}\label{sec:installazione_mingw}
+Per installare \emph{MinGW}, 
+scaricare la versione aggiornata del software, 
+oppure seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Navigare nella cartella \\
+       \texttt{VPSS\textbackslash win\_exe\_32}
+ \item Cliccare sul file\\
+       \texttt{mingw-get-setup.exe}
+ \item Scegliere le opzioni di default.
+% \end{enumerate}
+% Installare MSYS (per avere i comandi \texttt{configure}, \texttt{make}, ecc.) seguendo le seguenti istruzioni.
+% \begin{enumerate}
+ \item Aprire \emph{MinGW Installation Manager}
+ \item Selezionare (tasto destro e ``mark for installation'') i seguenti pacchetti
+  \begin{itemize}
+   \item \texttt{mingw-developer-toolkit}
+   \item \texttt{mingw32-base}
+   \item \texttt{mingw32-gcc-ada}
+   \item \texttt{mingw32-fortran}
+   \item \texttt{mingw32-gcc-g++}
+   \item \texttt{mingw32-gcc-objc}
+   \item \texttt{msys-base}
+  \end{itemize}
+ \item Dal menu \texttt{installation} scegliere in successione 
+       \texttt{apply changes -> apply}
+ \item Creare il file \texttt{fstab} nella cartella \texttt{C:\textbackslash MinGW\textbackslash msys\textbackslash 1.0\textbackslash etc\textbackslash} in modo che contenga la riga \\
+       \texttt{C:\textbackslash MinGW  /mingw}
+%  \texttt{C:\textbackslash MinGW  /mingw}
+ \item creare una scorciatoia sul desktop a\\
+       \texttt{C:\textbackslash MinGw\textbackslash msys\textbackslash 1.0\textbackslash msys.bat}
+\end{enumerate}
+%
+\subsubsection{Installazione moduli Python}\label{sec:installazione_pymod}
+Il Dimostratore VPSS richiede l'installazione sia di Python che di Python3.
+Per installare i moduli Python/Python3 necessari seguire le seguenti istruzioni. Gli eseguibili si trovano nella cartella \texttt{VPSS\textbackslash win\_exe\_32}.
+\begin{enumerate}
+ \item Installare \emph{Python}\\
+       Utilizzare l'eseguibile \texttt{python-2.7.10.msi}
+ \item Installare \emph{Python3}\\
+       Utilizzare l'eseguibile \texttt{python-3.4.3.msi}
+ \item Nella cartella \texttt{C:\textbackslash Python34} modificare il nome del file \texttt{python.exe} in \texttt{python3.exe}
+ \item Installare \emph{wget}\\
+       Utilizzare l'eseguibile \texttt{wget-1.11.4-1-setup.exe}
+ \item Aggiungere i seguenti percorsi alla variabile \texttt{Path}:\\
+\texttt{C:\textbackslash MinGW\textbackslash bin;}\\
+\texttt{C:\textbackslash MinGW\textbackslash msys\textbackslash 1.0\textbackslash bin;}\\
+\texttt{C:\textbackslash Python27;C:\textbackslash Python27\textbackslash Scripts;}\\
+\texttt{C:\textbackslash Python34;C:\textbackslash Python34\textbackslash Scripts;}\\
+\texttt{C:\textbackslash Program Files (x86)\textbackslash GnuWin32\textbackslash bin;}\\
+       seguendo le seguenti istruzioni:
+       \begin{enumerate}
+        \item cliccare il tasto destro sulla cartella \texttt{Computer}
+        \item cliccare in successione\\
+              \texttt{Properties -> Advanced System Settings -> Advanced -> Environment Variables}
+        \item editare la variabile \texttt{Path} nel frame \texttt{System variables} aggiungendo, per esempio,
+        \texttt{C:\textbackslash Program Files (x86)\textbackslash GnuWin32\textbackslash bin} seguito da ``;''
+       \end{enumerate}
+ \item Installare \emph{WxPython}\\
+       Utilizzare l'eseguibile \texttt{wxPython3.0-win32-3.0.2.0-py27.exe}
+ \item Installare i seguenti moduli Python:
+ \begin{itemize}
+  \item \emph{MySQLdb}\\
+        Aprire la cartella \texttt{VPSS\textbackslash win\_exe\_32} e \\
+        utilizzare l'eseguibile \texttt{MySQL-python-1.2.5.win32-py2.7.exe}
+  \item \emph{pycrypto}\\
+        Aprire la cartella \texttt{VPSS\textbackslash win\_exe\_32} e \\
+        utilizzare sia l'eseguibile \texttt{pycrypto-2.5.win32-py2.7.exe}
+        che l'eseguibile \texttt{pycrypto-2.6.1.win32-py3.4.exe}
+        
+  \item \emph{pyparsing}\\
+       Digitare \texttt{easy\_install pyparsing} dal prompt dei comandi.
+  \item \emph{sphinx}\\
+       Digitare \texttt{pip install sphinx} dal prompt dei comandi.
+ \end{itemize}
+\end{enumerate}
+%
+\subsubsection{Installazione dipendenze}\label{sec:installazione_dep}
+Seguire le seguenti istruzioni per installare le librerie GMP, OpenSSL, PBC e CHARM.
+\begin{enumerate}
+ \item Copiare la cartella \texttt{VPSS} nella cartella\\
+       \texttt{C:\textbackslash MinGW\textbackslash msys\textbackslash 1.0\textbackslash home\textbackslash<nome\_utente>}
+ \item Installare \emph{Microsoft CryptoApi}\\
+       Aprire la cartella \texttt{VPSS\textbackslash win\_exe\_32} e utilizzare l'eseguibile \texttt{CSPTSTS10.EXE}
+ %
+ \item Lanciare il file \texttt{msys.bat} per aprire il terminale MinGW (cliccando la scorciatoia precedentemente creata sul desktop)
+ %
+ \item Dal ternimale MinGW, navigare nella cartella \texttt{VPSS\textbackslash CP-ABE-LIB}, 
+       e decomprimere i file \\
+	\texttt{gmp-6.0.0a.tar.bz2}\\
+	\texttt{openssl-1.0.2d.tar.gz}\\
+	\texttt{pbc-0.5.14.tar}\\
+	\texttt{pycrypto-2.6.1.tar.gz}\\
+	con i comandi\\
+	\texttt{tar -xvjf gmp-6.0.0a.tar.bz2}\\
+	\texttt{tar -xvf pbc-0.5.14.tar}\\
+	\texttt{tar -xzvf openssl-1.0.2d.tar.gz}\\
+	\texttt{tar -xzvf pycrypto-2.6.1.tar.gz}
+ \item Dal ternimale MinGW, installare le seguenti librerie seguendo i rispettivi comandi
+  \begin{enumerate}
+    %
+    \item \emph{GMP}
+    \begin{enumerate}
+      \item Navigare nella cartella \\
+	    \texttt{VPSS\textbackslash CP-ABE-LIB\textbackslash gmp-6.0.0}
+      \item  digitare i seguenti comandi\\
+	    \texttt{bash configure --prefix=/mingw --disable-static --enable-shared\\
+		    make\\
+		    make install}
+    \end{enumerate}
+    %
+    \item \emph{OpenSSL}
+    \begin{enumerate}
+      \item Navigare nella cartella \\
+	    \texttt{VPSS\textbackslash CP-ABE-LIB\textbackslash openssl-1.0.2d}
+      \item  digitare i seguenti comandi\\
+	    \texttt{./config --openssldir=/mingw --shared\\
+		    make\\
+		    make install}
+    \end{enumerate}
+    %
+    \item \emph{PBC}
+    \begin{enumerate}
+      \item Navigare nella cartella \\
+	    \texttt{VPSS\textbackslash CP-ABE-LIB\textbackslash pbc-0.5.14}
+      \item  digitare i seguenti comandi\\
+	    \texttt{bash configure --prefix=/mingw --disable-static --enable-shared\\
+		    make\\
+		    make install}
+    \end{enumerate}
+    %
+    \item \emph{CHARM}
+    \begin{enumerate}
+      \item Navigare nella cartella \\
+	    \texttt{VPSS\textbackslash charm-dev}
+      \item  digitare i seguenti comandi\\
+	    \texttt{bash configure.sh --prefix=/mingw --python=/c/Python34/python3.exe\\
+		    make\\
+		    make install}
+      \item Per poter generare curve personalizzate\\
+	    Copiare (sovrascrivendo il file precedente con lo stesso nome) il file\\
+	    \texttt{VPSS\textbackslash demo\_vpss\textbackslash pairingcurves.py}\\
+	    nella cartella\\
+	    \texttt{C:\textbackslash Python34\textbackslash Lib\textbackslash site-packages\textbackslash Charm\_Crypto-0.43-py3.4-win32.egg\textbackslash charm\textbackslash toolbox}
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+%
+\subsection{Installazione server MySql}\label{sec:installazione_mysql}
+%
+Installare il software MySql Server sia nella macchina in cui verrà utilizzato il Client (per la simulazione \auth) sia nella macchina in cui verrà utilizzato il \sr.\\
+Se la macchina in cui viene installato il \sr è diversa da quella in cui è stato installato il Client, allora prima di seguire le seguenti instruzioni installare Python seguendo le istruzioni della Sezione \ref{sec:installazione_pymod}.\\
+Per installare MySql seguire le seguenti istruzioni.
+\begin{enumerate}
+ \item Installare \emph{MICROSOFT .NET FRAMEWORK 4 FOR MICROSOFT WINDOWS OPERATING SYSTEM}\\
+       Utilizzando l'eseguibile\\
+       \texttt{dotNetFx40\_Full\_setup.exe}\\
+       nellca cartella  \texttt{VPSS\textbackslash win\_exe\_32} o scaricando l'eseguibile da\\
+       \url{go.microsoft.com/fwlink/?LinkId=181012}
+ \item Installare \emph{MySql} utillizzando l'eseguibile\\
+       \texttt{mysql-installer-web-community-5.6.25.0.msi}
+ \item Durante l'installazione scegliere l'opzione \texttt{Full}
+ \item Alla richiesta \texttt{Check Requirements} non aggiungere nessuna opzione e cliccare \texttt{Execute}
+ \item Durante il setup di MySql settare la password \texttt{mysql123}
+\end{enumerate}
+
+%
+\subsection{Installazione server FTP}\label{sec:installazione_ftp}
+%
+Installare un server FTP nella macchina si vuole installare il \sa.\\
+In questa sezione sono descritte le istruzioni per installare il software \emph{FileZilla}.\\
+Gli eseguibili a cui si fa riferimento sono contenuti nella cartella \texttt{VPSS\textbackslash win\_exe\_32}.\\
+Se la macchina in cui viene installato il \sa è diversa da quella in cui è stato installato il Client, allora prima di seguire le seguenti instruzioni installare Python seguendo le istruzioni della Sezione \ref{sec:installazione_pymod}.
+\begin{enumerate}
+ \item Installare \emph{FileZilla Client} utilizzando l'eseguibile\\
+       \texttt{FileZilla\_3.13.1\_win64-setup.exe}
+ \item Installare \emph{FileZilla Server} utilizzando l'eseguibile\\
+       \texttt{FileZilla\_Server-0\_9\_53.exe}
+ \item Aprire Filezilla Server senza inserire una password.
+ \item Nel frame \texttt{Page -> General}\\
+       cliccare su \texttt{Edit -> Users -> Add}
+ \item Aggiungere un utente con nome \texttt{cloud} e password \texttt{cloud}
+ \item Creare la cartella\\
+       \texttt{C:\textbackslash FTP}
+ \item Nel frame \texttt{Page -> Shared folders}
+       \begin{enumerate}
+        \item aggiungere la cartella \texttt{C:\textbackslash FTP} come \emph{home directory}
+        \item selezionare la cartella \texttt{C:\textbackslash FTP}
+        \item spuntare le caselle \texttt{read}, \texttt{write}, \texttt{delete}
+       \end{enumerate}
+\end{enumerate}
+%
+\section{Installazione in Ubuntu 14.04}
+%
+Le istruzioni che seguono sono state testate su una macchina a 64 bit con sistema operativo Ubuntu 14.04 LTS, in lingua inglese.\\
+Seguire le istruzioni di installazione nell'ordine in cui sono presentate.\\
+Ci sono due possibili installazioni: la prima è più rapida ed automatizzata e consente di installare tutti i componenti su un'unica macchina (\ref{sec:installazione_veloce_ubu}), la seconda è più lenta ma permette di utilizzare macchine diverse e creare così un ambiente più vicino a quello di utilizzo ideale (\ref{sec:installazione_client_ubu}, \ref{sec:installazione_mysql_ubu}, \ref{sec:installazione_ftp_ubu}). In particolare:
+\begin{itemize}
+ \item Eseguire le istruzioni della Sezione \ref{sec:installazione_veloce_ubu} per installare sia il Client (per simulazione Utenti e \auth) sia i \sa e Ricerca in un'unica macchina.
+ \item Eseguire le istruzioni della Sezione \ref{sec:installazione_client_ubu} sulla macchina in cui si vuole avviare il Client (sia per simulazione Utenti, che per simulazione \auth).
+ \item Eseguire le istruzioni della Sezione \ref{sec:installazione_mysql_ubu} sulla macchina in cui si vuole installare il \sr e sulla macchina in cui si vuole utilizzare il Client per la simulazione \auth (poiché anche essa possiede un database).
+ \item Eseguire le istruzioni della Sezione \ref{sec:installazione_ftp_ubu} sulla macchina in cui si vuole installare il \sa.\\
+\end{itemize}
+Assicurarsi di avere una connessione internet funzionante.
+%
+\subsection{Installazione Veloce}\label{sec:installazione_veloce_ubu}
+%
+Le seguenti istruzioni possono essere eseguite per installare su un'unica macchina il Client per utenti e authority ed i \sa e Ricerca.
+\begin{enumerate} 
+ \item Da terminale, navigare nella cartella\\
+       \texttt{VPSS\textbackslash demo\_vpss}
+ \item Digitare\\
+       \texttt{bash INSTALL\_CLIENT.sh}
+ \item Quando viene richiesta la password MySql inserire\\
+       \texttt{mysql123}
+ \item Digitare\\
+       \texttt{bash INSTALL\_SERVER.sh}
+ \item Quando viene richiesta la password FTP inserire\\
+       \texttt{cloud}
+\end{enumerate}
+%
+\subsection{Installazione Client}\label{sec:installazione_client_ubu}
+Eseguire le istruzioni in questa sezione sulla macchina in cui si desidera utilizzare il Client per la simulazione Utenti e per la simulazione \auth.\\
+Da terminale, digitare i seguenti comandi
+%%
+\begin{enumerate}
+ \item Settare i permessi della cartella \texttt{VPSS}\\
+       \texttt{sudo chmod -R 755 VPSS}
+%
+% # INSTALL SERVER FTP AND MYSQL
+% # ----------------------------
+% 
+ \item Installare Client \emph{FTP} e \emph{MySql}\\
+       \texttt{sudo apt-get install --yes ftp}\\
+       \texttt{sudo apt-get install --yes mysql-client}\\
+       \texttt{sudo apt-get install --yes mysql-server}\\
+% 
+% #If you are using ubuntu, you have to use the following steps to avoid this error:
+% # - run the command vim /etc/mysql/my.cnf
+% # - comment bind-address = 127.0.0.1 using the # symbol
+% # - restart your mysql server once with
+% #    service mysql restart
+% #    or
+% #    /etc/init.d/mysql restart
+% 
+% #INSTALL DEPENDENCIES
+% #--------------------
+% # PYTHON 2.7, PYTHON3, WXPYTHON
+\item Installare moduli \emph{Python}\\
+      \texttt{sudo apt-get install --yes python}\\
+      \texttt{sudo apt-get install --yes python-mysqldb}\\
+      \texttt{sudo apt-get install --yes python3}\\
+      \texttt{sudo apt-get install --yes python-wxgtk2.8}\\
+ 
+% # OTHER LIBRARIES:
+% #      (instructions in the folder CP-ABE-LIB)
+% #        - GMP 5.x
+% #        - PBC 0.5.14
+% #        - OPENSSL
+% 
+\item Installare il programma \emph{M4}\\
+      \texttt{sudo apt-get install --yes m4}
+%
+% # gmp library
+\item Installare la libreria \emph{GMP}\\
+      \texttt{cd ../CP-ABE-LIB/gmp-6.0.0}\\
+      \texttt{./configure}\\
+      \texttt{make}\\
+      \texttt{sudo make install}
+% 
+\item Installare il programma \emph{FLEX} e \emph{BISON}\\
+      \texttt{sudo apt-get install --yes flex}
+      \texttt{sudo apt-get install --yes bison}
+% 
+% # openssl
+\item Installare il programma \emph{OPENSSL}\\
+      \texttt{sudo apt-get install --yes libssl-dev}
+% 
+% # pbc library
+\item Installare la libreria \emph{PBC}\\
+      \texttt{cd ../CP-ABE-LIB/pbc-0.5.14}\\
+      \texttt{./configure}\\
+      \texttt{make}\\
+      \texttt{sudo make install}
+% 
+% 
+% #INSTALL CHARM
+% #-------------
+% #    - from a terminal, navigate into the folder
+% #      "charm-0.43"
+% #      and run the following commands:
+% 
+\item Installare la libreria \emph{CHARM}\\
+      \texttt{cd ../../charm-0.43}\\
+      \texttt{sh configure.sh}\\
+      \texttt{sudo make}\\
+      \texttt{sudo make install}\\
+      \texttt{ldconfig}
+% 
+% cd ../demo_vpss
+% python SET_VPSS_client.py
+\end{enumerate}
+%
+\subsection{Installazione server MySql}\label{sec:installazione_mysql_ubu}
+%
+Installare il software MySql Server sia nella macchina in cui verrà utilizzato il Client (per la simulazione \auth) sia nella macchina in cui verrà utilizzato il \sr.\\
+Se la macchina in cui viene installato il \sr è diversa da quella in cui è stato installato il Client, allora prima di seguire le seguenti instruzioni installare Python digitando i comandi
+\texttt{sudo apt-get install --yes python}\\
+\texttt{sudo apt-get install --yes python-mysqldb}\\
+
+Per installare MySql seguire le seguenti istruzioni.
+\begin{enumerate}
+ \item \item Installare Server\emph{MySql}\\
+       \texttt{sudo apt-get install --yes mysql-server}\\
+       
+% # CONFIGURE MYSQL SERVER
+% # ----------------------
+ \item Configurare il server MySql, assicurandosi che il file
+       \texttt{/etc/mysql/mysql.conf.d/mysqld.cnf}\\
+       contenga le seguenti righe (l'ultima commentata)
+\begin{verbatim}
+[mysqld]
+user            = mysql
+pid-file        = /var/run/mysqld/mysqld.pid
+socket          = /var/run/mysqld/mysqld.sock
+port            = 3306
+basedir         = /usr
+datadir         = /var/lib/mysql
+tmpdir          = /tmp
+language        = /usr/share/mysql/English
+bind-address    = <HOST_IP_ADDRESS>
+# skip-networking
+\end{verbatim}
+       Dovrebbe essere sufficiente digitare i comandi
+\begin{verbatim}
+IP="$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)"
+sudo sed -i "s/bind-address/bind-address = "$IP"\n#/g" /etc/mysql/my.cnf
+\end{verbatim}
+%
+ \item Relanciare MySql con il comando\\
+       \texttt{sudo service mysql restart}
+\end{enumerate}
+
+%
+\subsection{Installazione server FTP}\label{sec:installazione_ftp_ubu}
+%
+Installare un server FTP nella macchina si vuole installare il \sa.\\
+In questa sezione sono descritte le istruzioni per installare il software \emph{FileZilla}.\\
+Gli eseguibili a cui si fa riferimento sono contenuti nella cartella \texttt{VPSS\textbackslash win\_exe\_32}.\\
+Se la macchina in cui viene installato il \sa è diversa da quella in cui è stato installato il Client, allora prima di seguire le seguenti instruzioni installare Python digitando i comandi
+\texttt{sudo apt-get install --yes python}\\
+\texttt{sudo apt-get install --yes python-mysqldb}\\
+
+Per installare il server FTP seguire digitare il comando\\
+\texttt{sudo apt-get install --yes ftp}\\ 
+Configurare il server FTP eseguendo le seguenti istruzioni
+\begin{enumerate}
+ \item Assicurarsi che il file \texttt{/etc/vsftpd.conf} contenga le righe seguenti\\
+       \texttt{local\_enable=YES}\\
+       \texttt{write\_enable=YES}\\
+       \texttt{userlist\_enable=YES}\\
+       \texttt{userlist\_deny=NO}\\
+       \texttt{userlist\_file=/etc/vsftpd.user\_list}\\
+       Dovrebbe essere sufficiente digitare i seguenti comandi
+\begin{verbatim} 
+sudo sed -i "s/local_enable=NO/local_enable=YES/g" /etc/vsftpd.conf
+sudo sed -i "s/#write_enable/write_enable/g" /etc/vsftpd.conf
+sudo sed -i "s/write_enable=NO/write_enable=YES/g" /etc/vsftpd.conf
+
+sudo sed -i "/userlist_enable=YES/d" /etc/vsftpd.conf
+sudo sed -i "/userlist_deny=NO/d" /etc/vsftpd.conf
+sudo sed -i "/userlist_file=\/etc\/vsftpd.user_list/d" /etc/vsftpd.conf
+
+echo "userlist_enable=YES" | sudo tee -a /etc/vsftpd.conf
+echo "userlist_deny=NO" | sudo tee -a /etc/vsftpd.conf
+echo "userlist_file=/etc/vsftpd.user_list" | sudo tee -a /etc/vsftpd.conf
+\end{verbatim}
+% 
+\item Creare il file\\
+      \texttt{/etc/vsftpd.user\_list}\\
+      e, per aggiungere l'utente \texttt{cloud}, aggiungere la riga\\
+      \texttt{cloud}\\
+      Per farlo è possibile utilizzare i comandi
+\begin{verbatim}
+if [ -f /etc/vsftpd.user_list ]; then
+    sudo sed -i "/cloud/d" /etc/vsftpd.user_list
+fi
+echo "cloud" | sudo tee -a /etc/vsftpd.user_list
+\end{verbatim}
+\item Editare \texttt{/etc/shells} aggiungendo la riga\\
+      \texttt{/bin/false}\\
+      Per farlo utilizzare il comando
+\begin{verbatim}
+sudo sed -i "\/bin\/false/d" /etc/shells
+echo "/bin/false" | sudo tee -a /etc/shells
+\end{verbatim}
+\item Aggiungere il nuovo utente \texttt{cloud} con password \texttt{cloud} utilizzando i seguenti comandi
+\begin{verbatim}
+FTP_CLOUD_FOLDER="/home/cloud" 
+sudo mkdir -p ${FTP_CLOUD_FOLDER}
+sudo useradd cloud -d ${FTP_CLOUD_FOLDER} -s /bin/false
+sudo passwd "cloud"
+sudo chown -R cloud:users ${FTP_CLOUD_FOLDER}
+\end{verbatim}
+% 
+% #  - in case the previous commands do not work, try also these commands:
+% #        FTP_CLOUD_FOLDER="/home/cloud"
+% #        sudo mkdir ${FTP_CLOUD_FOLDER}
+% #        sudo useradd -d ${FTP_CLOUD_FOLDER} -g users -s /bin/false cloud
+% #        sudo passwd cloud
+% #        sudo chown -R cloud.users ${FTP_CLOUD_FOLDER}
+% #        sudo touch /etc/vsftpd.user_list 
+% #        sudo echo "cloud" > /etc/vsftpd.user_list
+% 
+% #  - restart the deamon with one of the following 
+% #    (only one should suffice if no errors occur)
+% #        sudo service vsftpd restart
+% #        sudo /etc/init.d/vsftpd restart
+% #        sudo /usr/sbin/vsftpd restart
+% #        sudo /etc/init.d/vsftpd start
+% 
+ \item Relanciare il demone con il comando\\
+       \texttt{sudo service vsftpd restart}
+\end{enumerate}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\chapter{Setup del sistema}\label{sec:setup}
+%
+Assicurarsi di avere copiato la cartella \texttt{VPSS} sulle macchine in cui sono stati installati
+\footnote{Dato lo scopo dimostrativo del programma, è immaginabile che per semplicità le tre macchine possano coincidere.}\\
+ \begin{itemize}
+  \item il Client
+  \item il \sr
+  \item il \sa
+ \end{itemize}
+%
+La configurazione del Dimostratore è contenuta in sei file memorizzati nella cartella \texttt{VPSS\textbackslash demo\_vpss}, tre dedicati all'impostazione statica (generale) del sistema (Sezione \ref{sec:file_config_statici}) e tre relativi invece alla sua configurazione dinamica (Sezione \ref{sec:file_config_dinamici}).\\
+%
+\section{File di configurazione statici}\label{sec:file_config_statici}
+%
+Dei tre file descritti in questa sezione, uno riguarda la configurazione di rete dei server (sezione \ref{sec:file_servers}) e due i parametri statici dell'\ac{ABE} (\ref{sec:file_scheme} e \ref{sec:file_curve}). Anche se ai fini dimostrativi del progamma in linea di massima non c'è motivo di farlo, è possibile modificare manualmente il contenuto di questi file, prestando però molta attenzione al loro significato e formato perché l'inserimento di dati errati impedirrebbe il corretto funzionamento del sistema. 
+%
+\subsection{Il file \emph{def\_servers.txt}}\label{sec:file_servers}
+In questo file sono contenuti gli indirizzi IP, lo username e la password del Server dell'\auth, del \sr e del \sa. Inoltre per il Server dell'\auth e per il \sr sono contenuti il nome del database di ciascun server e la password dell'utente root del server MySql.\\
+Un esempio di contenuto del file è il seguente
+\begin{verbatim}
+AUTHORITY_SERVER=localhost
+AUTHORITY_USERNAME=auth
+AUTHORITY_PASSWORD=auth123
+AUTHORITY_DB_NAME=authdb
+AUTHORITY_ROOT=root
+AUTHORITY_ROOT_PASSWORD=mysql123
+SEARCH_SERVER=localhost
+SEARCH_USERNAME=searchuser
+SEARCH_PASSWORD=search123
+SEARCH_NAME=searchdb
+SEARCH_ROOT=root
+SEARCH_ROOT_PASSWORD=mysql123
+CLOUD_SERVER=localhost
+CLOUD_USERNAME=cloud
+CLOUD_PASSWORD=cloud
+\end{verbatim}
+I parametri più importanti di questo file sono gli indirizzi IP dei tre server, in particolare ciò che è scritto a destra del carattere ``\texttt{=}'' ( ``uguale'') nelle righe 
+\begin{itemize}
+ \item \texttt{AUTHORITY\_SERVER}
+ \item \texttt{SEARCH\_SERVER}
+ \item \texttt{CLOUD\_SERVER}
+\end{itemize}
+In questo campo è possibile inserire l'indizzo IP del server di riferimento, ad esempio \texttt{127.0.0.1}, oppure la parola chiave ``\texttt{localhost}'' (senza le virgolette).\\
+Si consiglia di non modificare gli altri campi in modo da rimanere allineati con le istruzioni di installazione riportate nella Sezione \ref{sec:installazione}.
+%
+\subsection{Il file \emph{choose\_abe\_scheme.py}}\label{sec:file_scheme}
+In questo file è possibile selezionare lo schema ABE utilizzato per le operazione di generazione delle chiavi, di cifratura e decifratura.
+Il contenuto di default del file è il seguente
+\begin{verbatim}
+"""
+uncomment the file you wish to import
+each file defines a different abe scheme
+"""
+from abenc_waters09 import *
+#from abenc_bsw07 import *
+\end{verbatim}
+Lasciare senza commento solo la riga rappresentante lo schema che si vuole utilizzare. Per commentare le altre righe aggiungere il carattere ``\texttt{\#}'' all'inizio della riga. \\
+Attualmente gli schemi selezionabili sono due:
+\begin{enumerate}
+ \item Lo schema descritto in \cite{waters2011ciphertext}
+ \item Lo schema descritto in \cite{bethencourt2007ciphertext}
+\end{enumerate}
+Il primo dei due schemi è più efficiente e quindi viene proposto di default. Dal punto di vista dimostrativo delle funzionalità dell'\ac{ABE} la scelta dello schema è poco rilevante, ma è permessa per evidenziare l'elasticità dell'architettura implementata.
+%
+\subsection{Il file \emph{pairingcurves.py}}\label{sec:file_curve}
+In questo file è possibile inserire il dominio dei parametri di curve ellittiche personalizzate. \\
+Istruzioni su come generare curve ellittiche personalizzate con la libreria \emph{PBC} sono contenute all'interno del file.\\
+Al link (\textit{https://crypto.stanford.edu/pbc/manual/ch08s03.html}) si trova un documento che tratta il significato dei parametri delle curve inserite nel file. Tale descrizione esula dagli scopi di questa documentazione.\\
+La descrizione del file è stata qui riportata per completezza, ma al fine di dimostrare le funzionalità dell'architettura implementata non vi è in effetti ragione di modificarne il contenuto.
+%
+%
+\section{File di configurazione dinamici}\label{sec:file_config_dinamici}
+I tre file descritti in questa sezione sono dedicati alla definizione degli utenti (\ref{sec:file_users}) e dei parametri dinamici dell'\ac{ABE}, cioè l'insieme degli attributi (\ref{sec:file_attributes}) e le policy su di essi definiti (\ref{sec:file_policies}).\\
+Come descritto più avanti, il programma Client permette di modificare il contenuto dei file relativi agli utenti e alle policy, mentre quello degli attributi deve essere correttamente configurato manualmente. In ogni caso nella sezione \ref{sec:reset_configurazioni} è descritta la procedura automatica per ripristinare il contenuto di default di tutti e tre i file (costituito da un insieme minimo di valori che permettono l'utilizzo immediato del Dimostratore).
+%
+\subsection{Il file \emph{def\_attributes.txt}}\label{sec:file_attributes}
+Questo file contiene l'elenco, detto \emph{universo}, dei possibili attributi del sistema. Il formato del file prevede che l'elenco sia scritto su un'unica riga, separando gli attributi con il carattere ``\texttt{,}'' (``virgola''). Gli attributi devono contenere caratteri alfanumerici, ed il primo carattere deve essere alfabetico. I caratteri alfabetici devono essere maiuscoli. In \ref{sec:setup_file_users} è descritto come riportare il file al contenuto iniziale.\\
+Un file d'esempio può essere il seguente
+\begin{verbatim}
+ATTR1,ATTR2,ATTR3,ATTR4,ATTR5
+\end{verbatim}
+%
+\subsection{Il file \emph{def\_users.txt}}\label{sec:file_users}
+In questo file è contenuto l'elenco degli utenti iniziali del sistema (successivamente al primo avvio, gli utenti possono essere aggiunti e rimossi dal client \auth), con la rispettiva password di accesso e l'elenco degli attributi ad essi associati. In \ref{sec:setup_file_users} è descritto come riportare il file al contenuto iniziale.\\
+Un esempio di contenuto del file è il seguente
+\begin{verbatim}
+utente1:123:ATTR1
+utente2:123:ATTR1,ATTR2
+utente3:123:ATTR1,ATTR2,ATTR3,ATTR4
+AUTHORITY:123:ATTR1,ATTR2,ATTR3,ATTR4,ATTR5
+\end{verbatim}
+Ogni riga rappresenta i dati relativi ad un utente. I dati di ciascun utente sono raggruppabili in 3 campi separati dal carattere ``\texttt{:}'' (``due punti''). \\
+Il primo campo contiene il nome dell'utente, il secondo campo la password di accesso dell'utente. Questi due campi devono contenere esclusivamente caratteri alfanumerici.\\
+Il terzo campo rappresenta l'elenco degli attributi relativi all'utente. Gli attributi sono separati dal carattere ``\texttt{,}'' e devono essere scelti tra l'elenco di attributi definiti nel file \hyperref[sec:file_attributes]{\texttt{def\_attributes.txt}}.
+%
+\subsection{Il file \emph{def\_policies.txt}}\label{sec:file_policies}
+Questo file contiene le possibili policy con cui cifrare i file in chiaro. Costituito inizialmente da un insieme di policy pre-costituite (in \ref{sec:setup_file_users} è descritto come riportare il file al contenuto iniziale), questo file viene integrato dalle nuove policy costruite anche nel corso dell'esecuzione del Dimostratore (si veda Sezione \ref{sec:create_policy}).\\
+Un esempio di contenuto del file è il seguente
+\begin{verbatim}
+ATTR1
+ATTR2
+ATTR3
+ATTR4
+ATTR5
+ATTR1 and ATTR2
+ATTR1 and ATTR3
+ATTR1 and ATTR4
+ATTR1 and ATTR5
+ATTR1 or ATTR2
+ATTR1 or ATTR3
+ATTR1 or ATTR4
+ATTR4 or (ATTR1 and ATTR2)
+ATTR5 or (ATTR1 and ATTR2) or (ATTR4 or (ATTR1 and ATTR2))
+\end{verbatim}
+Ogni riga contiene una policy.
+Ciascuna policy deve essere una formula Booleana in forma disgiuntiva, senza la presenza dell'operatore di negazione. Le foglie di ciascuna formula devono essere attributi scelti dall'elenco del file \hyperref[sec:file_attributes]{\texttt{def\_attributes.txt}}.
+%
+\section{Reset configurazioni}\label{sec:reset_configurazioni}
+\subsection{Reset delle macchine}\label{sec:setup_macchine}
+\indent
+Durante l'utilizzo del Dimostratore, lo stato del Client, del \sr e del \sa vengono ovviamente modificati.
+Le seguenti istruzioni possono essere eseguite ogni qualvolta si desideri riportarli allo stato iniziale (reset). Sebbene sia possibile eseguire il reset di ciascuna macchina singolarmente, quando si effettua il reset di una macchina è consigliabile eseguire anche il reset delle altre due macchine, in modo da mantenerne lo stato allineato e coerente. Per la stessa ragione è inoltre preferibile eseguire nella stessa occasione il reset dei file di configurazione dinamici, come descritto in \ref{sec:setup_file_users}.
+\begin{enumerate}
+ \item Sulla macchina in cui è installato il \sr
+ \begin{enumerate}
+  \item Dal prompt dei comandi navigare nella cartella\\
+        \texttt{VPSS\textbackslash demo\_vpss}
+  \item Digitare il comando\\
+        \texttt{python SET\_SEARCH\_server.py}
+ \end{enumerate}
+ %
+ \item Sulla macchina in cui è installato il \sa
+ \begin{enumerate}
+  \item Dal prompt dei comandi navigare nella cartella\\
+        \texttt{VPSS\textbackslash demo\_vpss}
+  \item Digitare il comando\\
+        \texttt{python SET\_CLOUD\_server.py}
+ \end{enumerate}
+ %
+ \item Sulla macchina in cui è installato il Client
+ \begin{enumerate}
+ \item Dal prompt dei comandi navigare nella cartella \\
+       \texttt{VPSS\textbackslash demo\_vpss}
+ \item digitare i comandi\\
+       \texttt{python SET\_ABE\_client.py}\\
+       \texttt{python SET\_AUTHORITY\_server.py}
+\end{enumerate}
+\end{enumerate}
+%
+\subsection{Reset dei file di configurazione dinamici}\label{sec:setup_file_users}
+Ogni qualvolta si desideri resettare lo stato iniziale dei file di configurazione
+\begin{itemize}
+ \item \hyperref[sec:file_attributes]{def\_attributes.txt} (si veda \ref{sec:file_attributes});
+ \item \hyperref[sec:file_users]{def\_users.txt} (si veda \ref{sec:file_users});
+ \item \hyperref[sec:file_policies]{def\_policies.txt} (si veda \ref{sec:file_policies});
+\end{itemize}
+eseguire le seguenti istruzioni sulla macchina in cui è installato il client:
+\begin{enumerate}
+ \item Dal prompt dei comandi navigare nella cartella\\
+      \texttt{VPSS\textbackslash demo\_vpss}
+ \item Digitare il comando\\
+      \texttt{python SET\_FILES.py}
+\end{enumerate}
+Con la procedura descritta il contenuto dei tre file viene riportato al loro valore pre-impostato, che definisce una configurazione minima comunque utile a testare le funzionalità del sistema.\\
+Quando si esegue il reset dei file di configurazione è consigliabile eseguire anche il reset delle macchine, come descritto in \ref{sec:setup_macchine}.
+ 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\chapter{Utilizzo del Dimostratore}\label{sec:utilizzo}
+%
+Completata l'installazione del Dimostratore come descritto nel Capitolo \ref{sec:installazione}, tutte le operazioni, incluse le interazioni con il \sa e il \sr,  vengono eseguite attraverso il Client, il quale simula l'attività sia dell'\auth sia degli utenti.\\
+Prima di avviare il Client del Dimostratore per la prima volta, assicurarsi di 
+\begin{enumerate}
+ \item aver installato correttamente il Server dell'\auth, il \sr, il \sa, come spiegato nella Sezione \ref{sec:installazione};
+ \item aver copiato sulla propria macchina la cartella \texttt{VPSS};
+ \item aver settato le configurazioni allo stato iniziale, seguendo le istruzioni della Sezione \ref{sec:reset_configurazioni} (o avendole eventualmente modificate secondo quanto descritto nella Sezione \ref{sec:setup}, in particolare con riferimento all'universo degli attributi (\ref{sec:file_attributes})).
+\end{enumerate}
+%
+\section{Avvio del programma}
+Per avviare il Client 
+\begin{enumerate}
+ \item Tramite prompt dei comandi navigare nella cartella \\
+       \texttt{VPSS\textbackslash demo\_vpss}
+ \item Digitare il comando\\
+       \texttt{python vpss.py}
+\end{enumerate}
+%
+\section{Finestra \emph{Login}}\label{sec:window_login}
+%
+Dopo aver avviato il Client, compare una finestra di login divisa in due pannelli, uno relativo al login degli Utenti, uno relativo al login dell'\auth.\\
+Al primo avvio del programma il pulsante \texttt{Login come UTENTE} è disabilitato, poiché l'\auth deve ancora generare e distribuire le chiavi al sistema.
+Questo accade anche dopo un reset (\ref{sec:setup_macchine}, \ref{sec:setup_file_users})\footnote{Dopo un reset alcuni utenti sono presenti, in quanto ne viene ripristinato l'elenco predefinito, ma è comunque necessario fare il login come \auth per assegnare loro le chiavi.}.\\
+Se il contenuto dei campi \texttt{Nome Utente} e \texttt{Password} nel pannello relativo agli utenti sono corretti, cliccando sul pulsante \texttt{Login come UTENTE} la finestra Login si chiude e compare la \hyperref[sec:window_user]{finestra Utente}.\\
+Se il contenuto del campo \texttt{Password} nel pannello relativo all'\auth è corretto, cliccando sul pulsante \texttt{Login come AUTHORITY} la finestra Login si chiude e compare la \hyperref[sec:window_authority]{finestra Authority}.\\
+Il controllo di correttezza username/password viene effettuato interrogando un database presente sul Server dell'\auth, caricato inizialmente secondo i dati contenuti nel file \hyperref[sec:file_users]{def\_users.txt}.
+%
+\section{Finestra \emph{\auth}}\label{sec:window_authority}
+%
+La finestra relativa all'\auth presenta due tab:
+\begin{enumerate}
+ \item il \hyperref[sec:tab_setup]{tab Setup},
+ \item il \hyperref[sec:tab_gestione]{tab Gestione utenti}.
+\end{enumerate}
+Tramite questi due tab è possibile generare le chiavi del sistema, distribuirle,
+e creare e rimuovere utenti.\\
+Per uscire dalla finestra relativa all'\auth e tornare alla \hyperref[sec:window_login]{finestra Login}, cliccare il pulsante \texttt{Logout}.
+%
+\subsection{Tab \emph{Setup}}\label{sec:tab_setup}
+%
+Il tab \emph{Setup} permette di generare la \emph{Chiave Master} custodita dall'\auth e la \emph{Chiave Pubblica}, custodita in un'area comune a tutti gli utenti.
+Le due chiavi sono matematicamente collegate 
+e la Chiave Pubblica è generata a partire dalla Chiave Master. 
+Entrambe le chiavi sono generate una volta definito 
+il livello di sicurezza del crittosistema 
+e la curva ellittica su cui eseguire le diverse operazioni 
+relative al protocollo ABE.\\
+E' necessario generare le due chiavi almeno una volta dopo il reset del sistema.\\
+Per generare una Chiave Master ed una Chiave Pubblica seguire le seguenti istruzioni:
+\begin{enumerate}
+ \item Dal menù a tendina a fianco del campo \texttt{Selezionare livello di sicurezza:} selezionare il livello di sicurezza e la relativa curva
+ \item Cliccare sul pulsante \texttt{Genera}
+ \item Nella finestra che compare cliccare il pulsante \texttt{Yes}. Cliccando il pulsante \texttt{No} o il pulsante \texttt{Cancel} la generazione viene interrotta.
+ \item Se la generazione è avvenuta correttamente, 
+       una finestra informa l'utente del percorso 
+       in cui sono state salvate la Chiave Master e la Chiave Pubblica, 
+       rispettivamente nei file \texttt{\hyperref[sec:format_pk]{master.k}} e \texttt{\hyperref[sec:format_pk]{public.k}}.
+       Cliccare il pulsante \texttt{OK}.
+ \item A questo punto l'\auth esegue in automatico le seguenti operazioni, che potrebbero richiedere qualche minuto:
+ \begin{enumerate}
+  \item Ogni file presente sul \sa viene scaricato in locale, decifrato e ricifrato con la nuova chiave pubblica.
+  \item Per ogni utente del sistema, a partire dalla nuova Chiave Master, viene generata una Chiave Segreta di decifratura contenente intrinsecamente gli attributi relativi all'utente.
+  \item La chiave viene distribuita a ciascun utente (salvata nella sua area di memoria).
+  \item Il tempo del sistema, contenuto nel file pubblico \texttt{time.t}, 
+        viene incrementato di un'unità.
+ \end{enumerate}
+      Se le suddette operazioni sono avvenute con successo una nuova finestra compare per informare l'utente della riuscita delle operazioni.
+      Cliccare il pulsante \texttt{OK}.
+\end{enumerate}
+%
+\subsubsection*{Maggiori dettagli}
+La Chiave Master viene salvata nel file\\
+\texttt{\hyperref[sec:format_pk]{master.k}}\\
+contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_vpss\textbackslash authority\textbackslash master\_keys}\\
+visibile solo all'\auth.\\
+
+La Chiave Pubblica viene salvata nel file\\
+\texttt{\hyperref[sec:format_pk]{public.k}}\\
+contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_vpss\textbackslash public\_parameters}\\
+visibile a tutti gli utenti.
+
+La Chiave Segreta dell'utente \texttt{username} viene salvata nel file\\
+\texttt{\hyperref[sec:format_sk]{username\_secret.k}}
+contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_vpss\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash ABE\_sk}\\
+visibile solo all'utente \texttt{username}.\\
+
+Il file \\
+\texttt{time.t}\\
+è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_vpss\textbackslash public\_parameters}\\
+visibile a tutti gli utenti.
+%
+\subsection{Tab \emph{Gestione utenti}}\label{sec:tab_gestione}
+%
+Il tab \emph{Gestione utenti} permette all'\auth di generare un nuovo utente del sistema o di rimuovere un utente esistente.
+%
+\subsubsection{Creazione nuovo utente}\label{sec:creazione_utente}
+Per creare un nuovo utente del sistema seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Nel campo \texttt{Nome utente:} inserire il nome che si desidera attribuire al nuovo utente. 
+       Il nome deve contenere esclusivamente caratteri alfanumerici.
+ \item Il campo \texttt{Password:} è settato di default al valore \texttt{123} 
+       e per semplicità non può essere cambiato (sarebbe infatti irrilevante ai fini dimostrativi del software).
+ \item Cliccare sul pulsante \texttt{Crea Utente}.
+       Se il nome utente inserito è già esistente o contiene caratteri non alfanumerici, 
+       compare un messaggio di errore e la generazione viene interrotta.
+       Altrimenti compare una finestra in cui selezionare gli attributi dell'utente, scegliendo dall'insieme di attributi definito nel file \texttt{\hyperref[sec:file_attributes]{def\_attributes.txt}}
+       \begin{itemize}
+        \item Se viene cliccato il pulsante \texttt{Cancel} la creazione dell'utente viene interrotta.
+        \item Se non viene selezionato nessun attributo e viene cliccato il pulsante \texttt{OK} viene creato un utente non abilitato né alla decifratura né alla ricerca tra i file cifrati, ovvero tale utente non è in possesso di una Chiave Segreta di decifratura né di una Chiave Segreta di ricerca.
+        \item Se viene selezionato almeno un attributo e viene cliccato il pulsante \texttt{OK} viene creato un nuovo utente al quale viene assegnata una Chiave Segreta di decifratura, generata sul momento a partire dalla Chiave Master corrente e contenente gli attributi selezionati, ed una Chiave Segreta di Ricerca, uguale per tutti gli utenti.
+       \end{itemize}
+ \item Se l'utente è stato creato correttamente compare un messaggio di conferma creazione utente. Cliccare il pulsante \texttt{OK}.\\
+       Inoltre il database dell'\auth viene aggiornato con l'inserimento del nuovo utente ed i rispettivi attributi associati.
+\end{enumerate}
+
+\subsubsection*{Maggiori dettagli}
+La creazione di un utente con nome \texttt{username} implica la creazione di una nuova cartella \texttt{username} all'interno della cartella \texttt{VPSS\textbackslash users}.
+Successivamente alla creazione dell'utente \texttt{username} la cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username}\\
+sarà così composta
+\begin{itemize}
+ \item \texttt{\textbackslash ciphertext} cartella contenente i file cifrati dell'utente
+ \item \texttt{\textbackslash plaintext} cartella contenente i file in chiaro dell'utente
+ \item \texttt{\textbackslash secret\_keys}  cartella contenente le chiavi segrete dell'utente
+  \begin{itemize}
+  \item \texttt{\textbackslash ABE\_sk} cartella contenente la chiave segreta ABE dell'utente
+  \begin{itemize}
+   \item \texttt{\hyperref[sec:format_sk]{username\_secret.k}} file contenente la chiave segreta ABE (si veda \ref{sec:enc_file})
+  \end{itemize}
+  \item \texttt{\textbackslash AES\_sk} cartella contenente la chiave simmetrica segreta AES dell'utente
+  \item \texttt{\textbackslash SEARCH\_sk} cartella contenente la chiave segreta di ricerca dell'utente
+  \begin{itemize}
+   \item \texttt{\hyperref[sec:format_searchk]{search.k}} file contenente la chiave segreta di ricerca
+  \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+%
+\subsubsection{Rimozione utente}\label{sec:rimozione_utente}
+%
+Per rimuovere un utente dal sistema seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Selezionare un utente dal menù a tendina sopra il pulsante \texttt{Rimuovi Utente}
+ \item Cliccare il pulsante \texttt{Rimuovi Utente}.
+\end{enumerate}
+Non è possibile rimuovere l'utente \texttt{AUTHORITY}.
+%
+\subsubsection*{Maggiori dettagli}
+%
+Quando un utente con nome \texttt{username} viene rimosso, vengono rimossi i seguenti oggeti dal sistema
+\begin{itemize}
+ \item l'intera cartella relativa all'utente,
+ \item i dati relativi all'utente presenti nel database dell'\auth.
+\end{itemize}
+%
+\section{Finestra \emph{Utente}}\label{sec:window_user}
+%
+La finestra relativa all'Utente presenta quattro tab:
+\begin{enumerate}
+ \item il \hyperref[sec:tab_cifra]{tab Cifra}, che permette di cifrare localmente i file in chiaro dell'utente;
+ \item il \hyperref[sec:tab_decifra]{tab Decifra}, che permette di decifrare localmente i file cifrati dell'utente;
+ \item il \hyperref[sec:tab_trasferimento]{tab Trasferimento file}, che permette di caricare file in chiaro sul \sa; di effettuare ricerche per parole chiave sul \sa; di scaricare file cifrati dal \sa;
+ \item il \hyperref[sec:tab_visualizza]{tab Visualizza contenuto cartelle}, che permette di visualizzare il contenuto delle cartelle e dei file relativi all'utente.
+\end{enumerate}
+%
+Nella parte alta della finestra vengono visualizzati il nome dell'utente loggato e l'insieme di attributi ad esso associati.\\
+Per uscire dalla finestra relativa all'Utente e tornare alla \hyperref[sec:window_login]{finestra Login}, cliccare il pulsante \texttt{Logout}.\\
+Per il resto della sezione corrente indicheremo con \texttt{username} il nome dell'utente loggato al sistema.\\
+%
+Come si può osservare, le operazioni di cifra/decifra (in locale) e quelle di ricerca e di caricamento/scaricamento (sul \sa) sono mantenute distinte per rendere chiaro il funzionamento del sistema.
+\subsection{Tab \emph{Cifra}}\label{sec:tab_cifra}
+%
+Il tab \emph{Cifra} permette di cifrare, utilizzando la Chiave Pubblica, i file in chiaro contenuti nella cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash plaintexts}\\
+associando al relativo file cifrato, in maniera intrinseca, una policy di cifratura, 
+creata o scelta dall'utente al momento della cifratura. 
+I file cifrati in questo modo saranno decifrabili solamente dagli utenti che possiedono una Chiave Segreta di decifratura contenente un insieme di attributi che soddisfi la suddetta policy.\\
+%
+\subsubsection{Creazione di una policy}\label{sec:create_policy}
+%
+Un elenco di possibili policy è contenuto nel file \texttt{\hyperref[sec:file_policies]{def\_policies.txt}}. Oltre a queste policy è possibile creare delle policy personalizzate.\\
+Per creare una policy seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Cliccare il pulsante \texttt{Crea} a fianco del label \texttt{Crea una policy:}
+ \item Nella finestra \texttt{Crea Policy} che compare, cliccare il pulsante \texttt{and} o il pulsante \texttt{or}
+ \item Selezionare almeno due elementi tra quelli dell'elenco proposto nella nuova finestra che compare
+ \item Cliccare il pulsante \texttt{OK}
+ \item La policy creata viene ora visualizzata in un label nella finestra \texttt{Crea Policy}. Se la policy visualizzata è corretta cliccare il pulsante \texttt{Aggiungi all'elenco} per aggiungere la policy al file \texttt{\hyperref[sec:file_policies]{def\_policies.txt}}
+ \item Seguire i precedenti passi fino a che non viene creata la policy desiderata
+ \item Cliccare sul pulsante \texttt{Fine} 
+\end{enumerate}
+A questo punto le policy create seguendo i passi precedenti saranno presenti nel menù a tendina sotto il pulsante \texttt{Crea}.
+%
+\subsubsection{Cifratura file}\label{sec:enc_file}
+%
+Per cifrare un messaggio rispetto ad una policy seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Cliccare sul pulsante \texttt{File...} per scegliere un file dalla cartella\\
+       \texttt{VPSS\textbackslash users\textbackslash username\textbackslash plaintexts}
+ \item Selezionare uno dei file presenti e cliccare il pulsante \texttt{Open}
+ \item Selezionare una policy dal menù a tendina sotto il pulsante \texttt{Crea}
+ \item Se la policy desiderata non è presente nel menù, crearne una personalizzata seguendo le istruzioni della Sezione \ref{sec:create_policy}
+ \item Cliccare il pulsante \texttt{Cifra}
+ \item Cliccare il pulsante \texttt{OK} nella finestra informativa che viene visualizzata
+\end{enumerate}
+Il nome del file cifrato è sempre costuito aggiungendo l'estensione \texttt{pdf} al nome del file in chiaro (ad esempio il file in chiaro \texttt{prova.pdf} genera il file cifrato \texttt{prova.pdf.enc}). Il file cifrato viene posto nella cartella \texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}.
+Se nella cartella di destinazione è già presente un file con lo stesso nome, viene aggiunto in coda al nome del file senza estensione il primo indice incrementale libero maggiore o uguale a 2, ad esempio \texttt{prova2.pdf.enc}.
+%
+\subsubsection*{Maggiori dettagli}
+%
+Durante la cifratura del file \texttt{prova.pdf} avvengono le seguenti operazioni
+\begin{enumerate}
+ \item Viene creata una stringa di \emph{metadati} contenente le seguenti informazioni:
+ \begin{itemize}
+  \item il \emph{tempo} del sistema, che rappresenta il numero progressivo assegnato ad ogni nuova Chiave Pubblica;
+  \item il nome dell'utente che cifra il file
+  \item il livello di sicurezza della cifratura
+  \item il percorso del file che definisce la curva ellittica utilizzata per il protocollo ABE
+  \item il percorso del file contenente Chiave Pubblica utilizzata
+  \item la policy utilizzata
+ \end{itemize}
+ \item Viene creata randomicamente una password segreta \texttt{password.k} temporanemente memorizzata nella cartella\\
+       \texttt{VPSS\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash AES\_sk}
+ \item Il file \texttt{password.k} viene cifrato con la Chiave Pubblica ABE \texttt{\hyperref[sec:format_pk]{public.k}} nel file \texttt{password.k.enc} contenuto temporaneamente nella cartella \\
+ \texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}
+ \item Utilizzando il contenuto del file  \texttt{password.k} come password ed il generatore random del sistema operativo,
+       vengono generati \emph{salt}, \emph{IV} e \emph{chiave simmetrica} secondo la funzione di derivazione della chiave PBKDF2 (Password-Based Key Derivation Function 2,  \url{https://tools.ietf.org/html/rfc2898}, \cite{CLOUD:PBKDF2}).
+ \item Il salt, l'IV e la chiave simmetrica generati vengono utilizzati per cifrare il file in chiaro \texttt{prova.pdf} con la cifrante AES-128 in modalità CBC.
+ \item Nella cartella \\
+        \texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}\\
+       viene creato il file cifrato \texttt{\hyperref[sec:format_ct]{prova.pdf.enc}} contenente la concatenazione di metadati, contenuto del file \texttt{password.k.enc} e cifratura di \texttt{prova.pdf} (contenente anche salt e IV), come descritto nella Sezione \ref{sec:format_ct}.
+ \item Il file \texttt{password.k} viene eliminato
+\end{enumerate}
+%
+\subsection{Tab \emph{Decifra}}\label{sec:tab_decifra}
+%
+Il tab \emph{Decifra} serve a visualizzare e decifrare i file cifrati presenti nella cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}\\
+Sia \texttt{username} il nome dell'utente loggato.
+La decifratura avviene utilizzando la Chiave Segreta di decifratura \texttt{\hyperref[sec:format_sk]{username\_secret.k}} presente nella cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash ABE\_sk}
+%
+\subsubsection{Visualizzazione dei file}\label{sec:view_localct}
+I file cifrati dell'utente \texttt{username} contenuti nella cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}\\
+sono visualizzabili tramite una tabella costituita dalle seguenti colonne
+\begin{itemize}
+ \item \texttt{File}, contenente il nome del file cifrato
+ \item \texttt{Autorizzazione}, contenente tre tipi di messaggio
+ \begin{itemize}
+  \item \texttt{Autorizzato}, se gli attributi dell'utente soddisfano la policy associata al file cifrato
+  \item \texttt{NON Autorizzato}, se gli attributi dell'utente \emph{non} soddisfano la policy associata al file cifrato
+  \item \texttt{Obsoleto}, se il tempo in cui è stato cifrato il file è minore del tempo attuale del sistema; in questo caso l'utente non sarà in grado di decifrare il file. 
+ \end{itemize}
+ \item \texttt{Policy}, contenente la policy associata al file
+ \item \texttt{Cifrato da}, contentente il nome dell'utente che per ultimo ha cifrato il file
+ \item \texttt{Chiave Pubblica}, contenente il nome del file che contiene la chiave pubblica utilizzata per cifrare
+ \item \texttt{Livello sicurezza}, contenente il livello di sicurezza della cifratura
+ \item \texttt{Gruppo}, contenente il nome del file che contiene il nome della curva ellittica utilizzata
+ \item \texttt{Tempo}, contenente il tempo del sistema in cui il file è stato cifrato
+\end{itemize}
+La tabella appena descritta si aggiorna automaticamente al click del tab Decifra, oppure può essere aggiornata manualmente cliccando il pulsante \texttt{Aggiorna}.\\
+Le righe della tabella possono apparire con tre colori
+\begin{itemize}
+ \item NERO, se il file è decifrabile dall'utente
+ \item ROSSO, se il file non è decifrabile dall'utente poiché i suoi attributi non soddisfano la policy del file
+ \item ARANCIONE, se il file non è decifrabile dall'utente poiché la sua Chiave Segreta di decifratura ABE è stata aggiornata ad un tempo successivo al tempo in cui era stato cifrato il file.
+\end{itemize}
+%
+\subsubsection{Decifratura file}\label{sec:dec_localct}
+%
+Per decifrare un file locale presente nella cartella \\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}\\
+seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Cliccare sul pulsante \texttt{File...} per scegliere un file dalla cartella\\
+       \texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}
+ \item Selezionare uno dei file presenti e cliccare il pulsante \texttt{Open}
+ \item Cliccare il pulsante \texttt{Decifra}
+ \item Cliccare il pulsante \texttt{OK} nella finestra informativa che viene visualizzata
+\end{enumerate}
+Se il file cifrato si chiama \texttt{[nome\_file].[estensione].enc}, il file decifrato si chiama \texttt{[nome\_file].[estensione]} e viene memorizzato nella cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash plaintexts}\\
+Se nella precedente cartella esiste già un file di nome \texttt{[nome\_file].[estensione]}, allora al nome del file viene aggiunto il primo indice incrementale maggiore o uguale a 2, ad esempio \texttt{[nome\_file]2.[estensione]}.
+%
+\subsubsection*{Maggiori dettagli}
+%
+Durante la decifratura del file \texttt{[nome\_file].[estensione].enc} avvengono le seguenti operazioni
+\begin{enumerate}
+ \item Viene estratta la stringa di \emph{metadati} (Sezione \ref{sec:ct_meta})
+ \item La password cifrata con lo schema ABE (Sezione \ref{sec:ct_abeenc}) viene estratta nel file \texttt{password.k.enc}
+ \item Il file \texttt{password.k.enc} viene decifrato con la Chiave Segreta di decifratura ABE \texttt{\hyperref[sec:format_sk]{username\_secret.k}} nel file \texttt{password.k} contenuto temporaneamente nella cartella \\
+ \texttt{VPSS\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash AES\_sk} 
+ \item Viene creato un file temporaneo \texttt{ciphertext.temp} contenente la cifratura AES.
+ \item Dal file \texttt{ciphertext.temp} vengono letti il \emph{salt} e l'\emph{IV}
+ \item Utilizzando il contenuto del file  \texttt{password.k} come password e il salt e l'IV appena letti viene generata la chiave simmetrica AES di decifratura.
+ \item Il file \texttt{ciphertext.temp} viene decifrato nel file\\
+       \texttt{[nome\_file].[estensione]}\\
+       memorizzato nella cartella\\
+       \texttt{VPSS\textbackslash users\textbackslash username\textbackslash plaintexts}\\
+       Viene aggiunto un indice in coda se il nome è già esistente.
+ \item I file \texttt{ciphertext.temp}, \texttt{password.k.enc}, \texttt{password.k} vengono eliminati
+\end{enumerate}
+%
+\subsection{Tab \emph{Trasferimento file}}\label{sec:tab_trasferimento}
+%
+Il tab \emph{Trasferimento file} permette di
+\begin{itemize}
+ \item caricare file locali sul \sa associando ad essi delle parole chiave cifrate (Sezione \ref{sec:upload})
+ \item effettuare ricerche per parola chiave tra i file cifrati presenti nel \sa (Sezione \ref{sec:search})
+ \item scaricare uno o più file dal \sa (Sezione \ref{sec:download})
+\end{itemize}
+%
+\subsubsection{Upload di un file}\label{sec:upload}
+%
+Per caricare un file locale cifrato dall'utente sul \sa, seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Cliccare sul pulsante \texttt{File...}
+ \item Selezionare uno dei file presenti nella finestra che viene visualizzata
+ \item Cliccare il tasto \texttt{Open}
+ \item Aggiungere un elenco di parole chiave nel campo \texttt{Aggiungi parole chiave:}. Le parole chiave devono essere costituite da caratteri alfanumerici e devono essere separate da una virgola. Il carattere spaziatore non viene considerato. E' possibile non associare alcuna parola chiave al file cifrato.
+ \item Cliccare sul pulsante \texttt{Carica sul cloud}
+\end{enumerate}
+Se nel \sa è già presente un file con nome identico a quello caricato, a quest'ultimo viene aggiunto il primo indice progressivo libero maggiore o uguale a 2.
+%
+\subsubsection*{Maggiori dettagli}
+%
+I file locali vengono caricati sul \sa tramite il protocollo FTP.\\
+I metadati relativi al file (Sezione \ref{sec:ct_meta}) vengono caricati su un database MySql nel \sr, insieme alle parole chiave cifrate.
+Ciascuna parola viene viene cifrata in modalità CBC con la cifrante AES-128, con IV e chiave simmetrica da 128 bit definiti nel file \texttt{\hyperref[sec:format_searchk]{search.k}}.\\
+Le parole chiave non sono mai rivelate al \sa, mentre il \sr non ha mai accesso il contenuto cifrato dei file caricati.
+%
+\subsubsection{Ricerca cifrata di un file}\label{sec:search}
+%
+I file presenti sul \sa sono elencati nella tabella \texttt{Contenuto cloud:}.
+E' possibile effettuare delle ricerche inserendo come filtro una formula Booleana in forma normale disgiuntiva senza la negazione nel campo \texttt{Filtra per parola chiave:}. \\
+Il simbolo AND logico è rappresentato dal carattere speciale \texttt{\&}.\\
+Il simbolo OR logico è rappresentato dal carattere speciale \texttt{|}.\\
+Il simbolo AND ha priorità sul simbolo OR.\\
+Alcuni esempi di formule ammissibili sono le seguenti
+\begin{verbatim}
+parola1 | parola2
+parola1 & parola2
+parola1 & parola2 | parola3
+parola1 & parola3 | parola1 & parola2
+\end{verbatim}
+Per effettuare una ricerca tra i file del \sa seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Inserire una formula ammissibile nel campo \texttt{Filtra per parola chiave:}
+ \item Cliccare sul pulsante \texttt{Aggiorna}
+\end{enumerate}
+Il risultato della ricerca viene presentato come elenco nella tabella \texttt{Contenuto cloud}.\\
+I file elencati sono tutti e soli i file il cui insieme di parole chiave associato soddisfa la formula inserita come filtro di ricerca.\\
+La ricerca è key sensitive.
+%
+\subsubsection*{Maggiori dettagli}
+%
+La struttura della formula Booleana inviata al \sr rimane in chiaro.
+Tuttavia le foglie della formula sono cifrate tramite la Chiave Segreta di ricerca.
+%
+\subsubsection{Download di un file}\label{sec:download}
+%
+Per scaricare uno o più file dal \sa in locale seguire le seguenti istruzioni
+\begin{enumerate}
+ \item Selezionare uno o più file nella tabella \texttt{Contenuto cloud}. Per selezionare più di un file tenere premuto il tasto \texttt{Ctrl} e cliccare con il mouse sulla riga relativa al file desiderato.
+ \item Cliccare il pulsante \texttt{Scarica selezione in locale}
+\end{enumerate}
+I file scaritati vengono memorizzati nella cartella\\
+\texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}\\
+Se viene trovato un file con nome identico al nome del file scaricato, a quest'ultimo viene aggiunto il primo indice progressivo maggiore o uguale a 2.
+%
+\subsection{Tab \emph{Visualizza contenuto cartelle}}\label{sec:tab_visualizza}
+%
+Il tab \emph{Visualizza contenuto cartelle} permette la visualizzazione e l'apertura dei file contenuti nelle seguenti cartelle
+\begin{itemize}
+ \item \texttt{VPSS\textbackslash public\_parameters}\\
+       La cartella contiene i file
+       \begin{itemize}
+        \item \texttt{\hyperref[sec:format_pk]{public.k}}
+        \item \texttt{\hyperref[sec:format_ec]{group.g}}
+        \item \texttt{\hyperref[sec:format_time]{time.t}}
+       \end{itemize}
+ \item \texttt{VPSS\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash ABE\_sk}\\
+        La cartella contiene il file
+       \begin{itemize}
+        \item \texttt{\hyperref[sec:format_sk]{username\_secret.k}}
+       \end{itemize}
+ \item \texttt{VPSS\textbackslash users\textbackslash username\textbackslash plaintexts}\\
+       La cartella contiene i file in chiaro.
+ \item \texttt{VPSS\textbackslash users\textbackslash username\textbackslash ciphertexts}\\
+       La cartella contiene i file cifrati.
+\end{itemize}
+Si osservi che il promo blocco di file (\textit{public.k}, \textit{group.g}, \textit{time.t}) contiene informazioni pubbliche del sistema, comuni a tutti gli utenti; le successive informazioni sono invece specifiche dell'utente loggato.\\
+Per visualizzare il contenuto di un file cliccare due volte sul nome del file.\\
+Per aprire una cartella cliccare due volte nell'area di colore bianco relativa alla cartella interessata.\\
+Per aggiornare l'elenco dei file visualizzati cliccare il pulsante \texttt{Aggiorna}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\chapter{Oggetti del sistema}\label{sec:oggettisistema}
+%
+\section{Chiave Master}\label{sec:mk}
+%
+La \emph{Chiave Master} è il segreto custodito dall'\auth, dal quale genera \hyperref[sec:pk]{Chiave Pubblica} e \hyperref[sec:sk]{Chiave Segrete di decifratura}.\\
+Chi è in possesso di questo segreto è in grado di decifrare qualsiasi file cifrato con la Chiave Pubblica generata partendo da esso.\\
+La sua dimensione è fissa.
+%
+\subsection{Formato Chiave Master}\label{sec:format_mk}
+%
+Il nome del file contenente la Chiave Master è \\
+\texttt{master.k}\\
+ed è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_abe\textbackslash authority\textbackslash master\_keys}\\
+Un esempio di una Chiave Master per una sicurezza da 112 bit è il seguente:
+\begin{verbatim}
+eJyVVMtu20AM/BVBZx2Wq31w+ytFarhBkB58KOC2QBH437MzJDe55mBL4pszJN/21/zjevv967p/29
+72y+X5dr3fL5f5tf/8/+flvh/blP673v6+UPq9pmOremyKZz82yXn+pYE3maL5pWV+yJT0KejnsbU2
+n7CV+dfrsY2pLPO9QtHgD6F6tCouaTCfwcoJTYKUySI+M4rMALVG/mJuFS4yXZThm2mQAlpJqGxEKr
+VqmJz2yAVJV/vBhwopbtaQMJ3WbBnWEstT9RdIYAbErFL01Gu8JGuOqoUOYNUp0OrZevZEeGnDna19
+6VGSAC01+CnR0xq0oMNNunyyHd3pWixKtJojOIDokQ+GiyTSVy0J+OlOPp7UJeMeWVA6ORRXWvnA3W
+DzMQBphk82ZzpUZxEatMWsp6Mikg2sMrwBkQBLnWhOJz2b2aKmkXxQUQUHdDWNKCo+P4Xqp8fcg1f5
+2qqgJKwKWtPTmdbglAuSPEt37kh9tm+bc2AD4EtwyPJIQ+pL1GzUyDiHJWgy6485kYXbaSjipz62CM
+EBdB6a46rJ/fHRVjHFPIfXzmUZNm3cKwOzeczmbNTILikWA2vQQg9DgA6ymh8R28zAhWtR1iZIiDTS
+1bhBTi36R3/EMaaj+V4giOYoYB2I89Om2NlBDh6RZP0VXwcUyf5HzJvENSoxTna9ckxlTh9N44iyx+
+THkU7GrZh6rOvg9whjwnX3A2lrn6IG33Ro2PaIHYjd4sFSOzuI0/38coaacVBj/9nO8EPA5vO6xL58
+lRfx6fF4B5ymL3w=
+\end{verbatim}
+%
+\section{Chiave Pubblica}\label{sec:pk}
+La \emph{Chiave Pubblica} è un dato conviso da tutti gli utenti del sistema e serve a cifrare un file in chiaro rispetto ad una policy sull'universo di attributi. \\
+La Chiave Pubblica è generata dall'\auth tramite un algoritmo randomizzato a partire dalla \hyperref[sec:mk]{Chiave Master}.\\
+La sua dimensione è fissa.
+%
+\subsection{Formato Chiave Pubblica}\label{sec:format_pk}
+%
+Il nome del file contenente la Chiave Pubblica è \\
+\texttt{public.k}\\
+ed è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_abe\textbackslash public\_parameters}\\
+Un esempio di una Chiave Pubblica per una sicurezza da 112 bit è il seguente:
+\begin{verbatim}
+eJyVWMtuJDcM/JXBnBJgDpJaIqn8SrBreBeGc/AhgJMAwcL/niZZJfXenMN4d7olio+qIjU/7q/1/t
+vtx/3p6fvb8/v709P57f7t379e3u+P2/n0n+e3v1/i6e99Pm7DHjeRx83q49aPx63Wcf4p5zfT83N+
+UfWn5ys9l/uWWs8/5mtbO58euWx0LnVr5kYMlmo51v98fyvnmefLiX99azyc5/7hR0983EI9HwiP9v
+0Whpq/arkeTpf0pFuG4hb0XGHuGff4WW5WDNb8ge/QMO+BFAShkY7TJXG3NJe4Jyq+VJAWf5OONngb
+WSuXNIpcPVZkylM4Wn5qPR/Kuc8EXyLLmTSPzmivx1GePcuzPRLflWZiWWcZwoRmYt2RcGKifDLwNi
+vl57m9qMQYiCUSEGa74vDIs2UqImP+1Ohy7IxYS/nJjU6LfqSnUEfmwreOgzsncSgLMzgvkyxwXogr
+ByE9sIbKhDuFro8DDgTim4f+5eNkw2v9+vx/yaJMbuQpwyooeuKwshCOAa+SbnRoQtLhGHUriS6SyK
+HtZVFkwRkSeIw0T0BjoBJTkZ3YslYAw0aqDRaDNEVuwb6oWtSjAK2GA8OU23S0KtxLiLldd3ogcluo
+LLk0kEQ8dEpIomQgE6EwKI/h46CKKjYYSpQd1BTNlIbpeFXtcnrAJ3jrIFi4TDjCGQ8zEdaAK8ZwLM
+zY5XVAtFIDgVk/elKQsigHlREY86RNctgLmsLCvMjCi3unCHsww5mpQpF1fksm0g8KReqQEKXwFsqS
+85kqSCV0yymh5SdWGHMN+nt0F4q8/PL6+uvX57c///g0U/ykAX3ImFF5YxtwuZqAPpA2QZVjtwYPUI
+TomYn3gLoldtxdd3USGUrY11X11ogB4ImfgbQG2IIChRgrSVI/OzSpVSTKn85CLDUkDBDyxHmyPQQa
+DpXy7YxtqUf0kEoPtfFVZwSVEFm9M1gbngLFIZoQUEE3MF0r0Ydda0heJfUg+cSXlyw9qrvVDaRa2c
+LDEjpBBFNyFyWCuoR+v46JhJK0ydWBWCNhSpb3C587gtm6w2ZmmEXQn3pSY8CZALMJ0TaBtEVEIfvZ
+3KxefAF/ZLluNNTZYRtjayB5sEuQt0qE7Pzi+JThg/q11HetLkBXzh2dQRpy0LNMwspAnhLhZSVVcl
+9WUxGMoDKrrStFpewenNRksDI2AzNzjeYbPDguIeRQ1lEzwZQhrOrq/tnkSQtFnfpVLtp1jkpFH5nZ
+wbro2CgE2ljXAvROJi8lOvrfQYjUJfIIzMiYFEW23N0k2fC8QBHa4FzTQASOTmkTgi2kermeFuNYh2
+RMxKYZfsTIjMbcS2Gzx55tFjSidwJhIVqaymOY+rIzdPDpmsNRWKBCqdELc1Yzt3wr7k7Nsal9uhUU
+DE11t82c4Ru6UWNTnIUFPwBLzlJMdRCoLV3slwnW0BPdvij5sATt2FOXKUd99uDCmcTQMaMHh4pwMF
+9Xj2RrjudKMajI3+CQEthtS7upfNl0BTPOalM82pS3BhQm4UxwFhaaxObIAKAihfEqprJKwSLYU3cw
+DkzwIQMl7WKuwG0wib/byfUSsgZqbReVqOSWUM5kMqZ1XVsqgknOIE8CD5Vq2tFacTPws2MGR9MTuz
+TIgdurksENFDBOZbzjxmChROEuAoeimFPYSionYQUXDV0ggBrQ9XAHRWTsm0X7/M1ikWTdnnizQyk5
+rkSoHSOpIj9DLjNJJ476RaUwVU82iyw5mpVNDli8kqwbvhJ1k5Jd26ZX0nO1K/S1rhveEwNwkB+AWv
+0GUJgcpApO3YPyarYJ4LpZToTCKV6uOYjNyavRpTnLHn3X8M07qO5xymjMePMc+MTAY6QclT+XQLpl
+EYwTCg0AZLxwkLAczcaeAS6D5cJuHskh1w4WnDeIdfOXSSbyh4IAr9Awk8PjTNkPlDcO/tTB09YEFb
+xfN85B6SCGDLeqgfs+r25KeSnxO8iXj4//ALA6cvA=
+\end{verbatim}
+%
+\section{Curva Ellittica}\label{sec:ec}
+Il livello di sicurezza dell'intero crittosistema e la sua efficienza sono determinati dalla scelta di un oggetto matematico chiamato \emph{Curva Ellittica}.\\
+La \hyperref[sec:mk]{Chiave Master}, la \hyperref[sec:pk]{Chiave Pubblica}, e le \hyperref[sec:sk]{Chiavi Segrete di decifratura} sono definiti tramite tale curva ellittica.\\
+Affinché i protocolli ABE utilizzati siano applicabili su tale curva deve essere definibile una mappa bilineare. \\
+Notiamo che le curve ottimali per protocolli basati sul Logaritmo Discreto non sono ottimali per crittosistemi ABE, e viceversa.
+%
+\subsection{Formato del file Curva Ellittica}\label{sec:format_ec}
+%
+Il nome del file contenente il nome della curva ellittica utilizzata nel protocollo ABE è \\
+\texttt{group.g}\\
+ed è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_abe\textbackslash public\_parameters}\\
+I possibili contenuti del file \texttt{group.g} sono i seguenti
+\begin{itemize}
+ \item \texttt{SS512}
+ \item \texttt{SS\_e\_R224Q1024}
+ \item \texttt{SS\_e\_R224Q2048}
+ \item \texttt{SS\_e\_R256Q3072}
+ \item \texttt{SS\_e\_R384Q8192}
+\end{itemize}
+con rispettivi livelli di sicurezza 80, 112, 112, 256, 384.\\
+Il significato di tali nomi è deducibile dalle informazioni contenute nel file \texttt{\hyperref[sec:file_curve]{pairingcurves.py}}.
+%
+\section{Tempo del sistema}\label{sec:time}
+Il \emph{Tempo} $t$ del crittosistema si riferisce alla $t$-esima \hyperref[sec:mk]{Chiave Master} generata da parte dell'\auth. \\
+Ad ogni generazione (\ref{sec:auth_setup}) il tempo incrementa di uno e cambiano anche la \hyperref[sec:pk]{Chiave Pubblica}, la \hyperref[sec:ec]{Curva Ellittica} utilizzata, le \hyperref[sec:sk]{Chiave Segrete di decifratura}. Inoltre tutti i file nel \sa vengono ricifrati con la nuova \hyperref[sec:pk]{Chiave Pubblica}.\\
+Alla prima generazione il tempo è settato al valore \texttt{1}.
+%
+\subsection{Formato del file Tempo del sistema}\label{sec:format_time}
+%
+Il nome del file contenente il tempo attuale del sistema è \\
+\texttt{time.t}\\
+ed è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_abe\textbackslash public\_parameters}\\
+Il file contiene una stringa rappresentante un numero intero $n$, il quale indica che la chiave pubblica attualmente in uso è l'$n$-esima chiave pubblica generata dall'\auth.\\
+Se per esempio la chiave in uso fosse la 15-esima chiave generata, il contenuto del file sarebbe il seguente
+\begin{verbatim}
+15
+\end{verbatim}
+%
+\section{Chiave Segreta di decifratura}\label{sec:sk}
+La \emph{Chiave Segreta di decifratura} è un dato segreto assegnato a ciascun utente del sistema a cui sono stati riconosciuti degli attributi da parte dell'\auth, e serve a decifrare un file cifrato. \\
+La Chiave Segreta di decifratura contiene intrinsecamente gli attributi dell'utente.\\
+Essa è generata dall'\auth tramite un algoritmo randomizzato a partire dalla \hyperref[sec:mk]{Chiave Master}.\\
+La sua dimensione aumenta linearmente con il numero di attributi dell'utente.
+%
+\subsection{Formato Chiave Segreta di decifratura}\label{sec:format_sk}
+%
+Se il nome dell'utente in possesso della Chiave Segreta di decifratura è \texttt{username}, 
+allora il nome del file contenente la Chiave Segreta di decifratura è \\
+\texttt{\hyperref[sec:format_sk]{username\_secret.k}}\\
+ed è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_abe\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash ABE\_sk}\\
+Un esempio di una Chiave Segreta di decifratura per una sicurezza da 112 bit è il seguente:
+\begin{verbatim}
+eJx9VrtuHDEM/JXD1VeI2tUrXWqnCtwFxsEOXARw5bODBIb/PZrhUI4ROMXe7WopajgckvtyvDr/On
+46vBw/X19/Nd6dzz9vH57vz+f59G0fp0Ppp0Od/6OdDr2eDljr5XRo83+fa5bmw4BRj4X50xJubG7f
+5rXPB5sPfXdf3GNp6HV982wpz81YmA5682skGcAxfKUkH3WutuxgGs7vvttsmrXpu5sbcMEsC0gx3V
+QAzjrLUnVXAIw3DUcUR1ZL4DacbjDLHnXv8o1IeGpzOARaeOh8Ks0Z4F73kjYRa6JrJLmii+pvcTk5
+1c+wnD0JhN5abA5queLBFlkXQQIasGTZdD69uo3FOtlK+X2mG91HLs2C51L8ch43KcDPhzl84NhmsT
+9lpX9X/DTe4xwoRffkg5oI+iE1XPumqEknUkBCLHIyHDBMERfiLyn0o2jwAAlBk+Cs1pvTYZbA94fb
+y4UlcLz7/XR/Ob6+zvUv/xYIPLJA6sqoCScZYaBMVpIw8QockUzbxHDyvJYkqeyhRtZGdzWGumoQTy
+vkixJLXaT27LzBG/7BVNc6fC29MGGscVlzu4t2l49IYhFECBhwKW/rQgJ4CHF0iYp4i0q3qYq61zvl
+Z1uoPofiJf+ASQgtzC0aRhUzNQgkXnACJvdoNyzlJvAkCukB+h4VtUVozVOy+lBTEEgYW0CP/jAEcV
+danYGlwhodjMyqVobgU/4WNKbwgM1NcChy1h7rOoIrq4uoKSAB9MC3xSEXdUnvAN0t2K2HHx67eBW5
+3RRrCRnllXVzlUb6avmoOOby1ce1wVEQ/XhEu6TSbCnRf1pUc/K0o6EVZbWpHwNoVwtHuKVJ+1jsJV
+poXRkqLqm3I4baILFEA+xRequEeiSuRlGQzC0CiOws8TZpkDPFYoZpT0wngYomO9SJILF3rWmNt5iZ
+3hvU7mGKF14NY2mpLWaLptiIWaxe2CW1ErW3rxJLghMdLHqHF3VTHYQOERxn4hoxqsas0soxdqu0CO
+el/RWFaFjDtb4BKPpaQMZxUa8hj6Z56FO8azhatBaIgb0rWhxTDxt+KnQ/bkS9Ek0RRMHkUAgxxPjt
++/IXHYwjS13pv/Vx+/T0+OPuGY+zNI6Xp8dP/s118/oHCVLJ+w==
+\end{verbatim}
+%
+\section{Chiave Segreta di ricerca}\label{sec:searchk}
+La \emph{Chiave Segreta di ricerca} è un dato segreto assegnato a ciascun utente del sistema e serve ad effettuare ricerche in maniera cifrata, in modo che il \sr non conosca il significato delle parole chiave ricercate. \\
+La \searchsk è uguale per ogni utente e non varia al variare del tempo del sistema. \\
+Essa è generata una volta per tutte durante il setup del sistema.\\
+La sua dimensione è fissa.
+%
+\subsection{Formato Chiave Segreta di ricerca}\label{sec:format_searchk}
+%
+Se il nome dell'utente in possesso della Chiave Segreta di ricerca è \texttt{username}, 
+allora il nome del file contenente la Chiave Segreta di ricerca è \\
+\texttt{search.k}\\
+ed è contenuto nella cartella\\
+\texttt{VPSS\textbackslash demo\_abe\textbackslash users\textbackslash username\textbackslash secret\_keys\textbackslash SEARCH\_sk}\\
+Il contenuto di questo file è suddiviso in due strighe da 16 caratteri esadecimali
+\begin{itemize}
+ \item \emph{IV}
+ \item \emph{chiave simmetrica}
+\end{itemize}
+separate dal carattere ``\texttt{:}'' (``due punti'').\\
+Un esempio di una Chiave Segreta di ricerca per una sicurezza da 128 bit è il seguente:
+\begin{verbatim}
+0000000000000000:0123456789abcdef
+\end{verbatim}
+Notiamo che questo file, e quindi la Chiave Segreta di ricerca, è identico per ogni utente e non varia al variare del tempo del sistema.
+%
+\section{File cifrati}\label{sec:ct}
+Ogni tipo di file in chiaro può essere cifrato dall'utente utilizzando la \hyperref[sec:pk]{Chiave Pubblica} ed una policy. \\
+Il file cifrato ottenuto ha dimensioni linearmente proporzionali al numero di foglie della formula Booleana rappresentante la policy.
+%
+\subsection{Formato del file cifrato}\label{sec:format_ct}
+%
+Il contenuto di un file cifrato è suddiviso in tre campi:
+\begin{enumerate}
+ \item \hyperref[sec:ct_meta]{metadati}
+ \item \hyperref[sec:ct_abeenc]{cifratura della password}
+ \item \hyperref[sec:ct_symenc]{cifratura del file in chiaro}
+\end{enumerate}
+I tre campi sono separati dalla stringa \\
+\texttt{\_\_\_FILESEPARATOR\_\_\_}
+%
+\subsubsection{Campo metadati}\label{sec:ct_meta}
+%
+Il campo \emph{metadati} contiene i metadati, in formato leggibile, relativi al file cifrato. 
+I metadati contenuti in questo campo sono i seguenti
+\begin{itemize}
+ \item tempo del sistema
+ \item cifratore del messaggio
+ \item livello di sicurezza della cifratura
+ \item percorso del file \texttt{group.g}, che definisce la curva utilizzata per la cifratura ABE
+ \item percorso del file \texttt{\hyperref[sec:format_pk]{public.k}}, che definisce la chiave pubblica
+ \item policy utilizzata per la cifratura
+\end{itemize}
+I precedenti campi sono separati dalla stringa\\
+\texttt{\&\&}
+%
+\subsubsection{Campo cifratura della password}\label{sec:ct_abeenc}
+%
+Il campo \emph{cifratura della password} contiene la cifratura della password generata durante la cifratura del file (Sezione \ref{sec:enc_file}). \\
+La cifratura della password avviene tramite uno schema ABE.\\
+Il formato di questo campo è una stringa di caratteri ASCII.
+%
+\subsubsection{Campo cifratura del file in chiaro}\label{sec:ct_symenc}
+%
+Il campo \emph{cifratura del file in chiaro} contiene la cifratura AES del file in chiaro utilizzando, come descrtitto nella Sezione \ref{sec:enc_file}.\\
+Il formato di questo campo è una stringa di caratteri esadecimali.
+%
+\subsubsection{Esempio}
+Un esempio di contenuto di un file cifrato è il seguente
+\begin{verbatim}
+TIME=1&&UTENTE=utente1&&SECLEV=80&&GROUPPATH=C:\Users\ema\Desktop\VPSS\demo
+_vpss\public_parameters\group.g&&PKPATH=C:\Users\ema\Desktop\VPSS\demo_cpa
+be\public_parameters\public.k&&POLICY=ATTR1___FILESEPARATOR___eJyNVctuGzEM/BVj
+zz5IWj1zK5IvKHILCsNJfTBgoEW8KRAE/vdqyKHWBtq0h31IosThDEl9TPfT3eZj+vL4+NXL3273a3
+96O+x2ffQU23aT6nZT/HbjQ3+lst001weuv1LoKwGDPlubrnoXu0n/KUX31f5N3brQoKT+5P50O+8z
+J2YM8ON0V7EjI717ePUVDm6HIRCb99gz5jGKs86ILxe5VL0F4Q0CQuvfiFU80Q6GH0SgHuSFcwATQV
+ZDAA84gb6bxuhd0OAV1ghUlsgD0NR5jTrbAfLK3Sr7b9tNF+bltD+fRZjp+X05nKfLpc8/fCYgfCcL
+qiqdgjd5AmpVFYA0qh8Gs3GWYBa4qWYVHPRoIH3QgDLrJNyBQ+wFa2pE0ZUe4x1bxGcchIgbxz8wnJ
+JSExuP8a7RIUGmmWfGyqSEsEp9UcB4kKlwL6qv5sZ0buYjUnvfz83FbIAXOOGZlMgaT66BvoUkQNMw
+/k+/e/f3usNucCnPEKgYY8g1S1nFH6xWnQYC9gRnnJm5Ep6bdUkyW5CPQvQ8AYGjAItpJGZSQ64RRS
+yDilnJRVoBNEiXaoHJyARshKY8KxGb7Ba2ERAsoRW+SLaSDLAQzyakJRa1fHLmRHK3/Lg1PXXTcK5l
+6lgVmWvVzvi3dFButxxP3w9/qDqv8glaKz2N3lqJQM8koDZL+sRlaaDtyqSZxI4xRXIGcoVxxzwug1
+qvBzazMqEECXiTGmMni8ZPqVfxF2PXeaMpsDxUtaxeJV3wg9BLs5Rha0vMDImkMO80YbPpGpSlzFhL
+uVJCV9cmwNtE5fSjbayHWZmgl0pg4TqRou3NIwlIiNr5G2emo5BaqZYlCtwVVokgSXYRlYE00ZtmoF
+05yepQS8BqRbqHFljk/TD6VlB/1S48CArOwZu0JiR1tn7ODqkxRpOxKfnSFyTYwmoLJo+1j0azccWJ
+z2rJEJmDEhFQfFoq+2V5PT6/LSiWp+m8vN7phYUtP3+cji/vsF/nL78BdrqqBA==___FILESEPARAT
+OR___2403e824f2324d59a106bad21754f0342b78af17c773491cf5fdb0c9f393d886894b5da25
+5b8b0fa7d432440d501c676
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% ------------------------- Bibliografia ------------------------
+
+\ifthenelse{\boolean{BReferences}}{
+  \clearpage
+  \addxcontentsline{toc}{chapter}{\bibname}
+  \bibliographystyle{plain}
+  \bibliography{\TBibFile}
+}{}
+\end{document}

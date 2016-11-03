@@ -1,5 +1,5 @@
-CONTENUTO CARTELLA
-------------------
+FOLDER
+------
 
   charm-0.43/
   charm-dev/
@@ -15,6 +15,8 @@ MANUALE
 
 Il manuale utente è contenuto nel documento:
 
-  TITOLO:    Dimostratore VPSS: Manuale Utente
-  CODICE:    300CL-101-N016
-  NOME FILE: 300CL101N016.pdf
+  TITOLO:      Prototipo ABE-SE: Manuale Utente
+  NOME FILE:   abe_se_proto.pdf
+  SOURCE FILE: abe_se_proto.tex
+
+nella cartella doc/
